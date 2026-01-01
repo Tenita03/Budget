@@ -64,10 +64,22 @@ body{
 
 select, input{
   font-size:14px;
-  border:1px solid transparent;
-  background:transparent;
   padding:8px 10px;
-  border-radius:10px;
+  border-radius:8px;
+  background:#f8fafc;
+  border:1px solid #e5e7eb;
+  width:100%;
+}
+
+select:hover, input:hover{
+  background:#f1f5f9;
+}
+
+select:focus, input:focus{
+  outline:none;
+  background:#ffffff;
+  border-color:rgba(0,122,255,.5);
+  box-shadow:0 0 0 3px rgba(0,122,255,.12);
 }
 
 select:hover, input:hover{ background:rgba(0,0,0,.04); }
@@ -143,6 +155,63 @@ select:focus, input:focus{
 table{
   width:100%;
   border-collapse:collapse;
+}
+
+/* Soft column separators */
+tbody td + td{
+  border-left:1px solid rgba(226,232,240,.6);
+}
+
+thead th + th{
+  border-left:1px solid rgba(226,232,240,.6);
+}
+
+/* ====== TABLE LAYOUT CONTROL ====== */
+table{
+  table-layout: fixed;
+}
+
+/* Bills table column widths */
+#billsCard th:nth-child(1),
+#billsCard td:nth-child(1){ width:40px; }
+
+#billsCard th:nth-child(2),
+#billsCard td:nth-child(2){ width:22%; }
+
+#billsCard th:nth-child(3),
+#billsCard td:nth-child(3){ width:110px; }
+
+#billsCard th:nth-child(4),
+#billsCard td:nth-child(4){ width:120px; }
+
+#billsCard th:nth-child(5),
+#billsCard td:nth-child(5){ width:160px; }
+
+#billsCard th:nth-child(6),
+#billsCard td:nth-child(6){ width:150px; }
+
+#billsCard th:nth-child(7),
+#billsCard td:nth-child(7){ width:120px; }
+
+/* Debt table column widths */
+#debtCard th:nth-child(1),
+#debtCard td:nth-child(1){ width:22%; }
+
+#debtCard th:nth-child(2),
+#debtCard td:nth-child(2),
+#debtCard th:nth-child(3),
+#debtCard td:nth-child(3),
+#debtCard th:nth-child(4),
+#debtCard td:nth-child(4),
+#debtCard th:nth-child(5),
+#debtCard td:nth-child(5),
+#debtCard th:nth-child(6),
+#debtCard td:nth-child(6),
+#debtCard th:nth-child(7),
+#debtCard td:nth-child(7),
+#debtCard th:nth-child(8),
+#debtCard td:nth-child(8){
+  width:110px;
 }
 
 thead th{
