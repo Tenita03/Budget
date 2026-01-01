@@ -1,145 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Paycheck Tracker – Planner Style</title>
 
 <style>
 body {
-  background: #f4f5f7;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  margin: 0;
-  padding: 0;
+  background:#f4f5f7;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  margin:0;
 }
 
 .planner {
-  max-width: 900px;
-  margin: auto;
-  padding: 16px;
+  max-width:900px;
+  margin:auto;
+  padding:16px;
 }
 
 .card {
-  background: #fff;
-  border-radius: 14px;
-  padding: 16px;
-  margin-bottom: 18px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  background:#fff;
+  border-radius:14px;
+  padding:16px;
+  margin-bottom:18px;
+  box-shadow:0 6px 20px rgba(0,0,0,.06);
 }
 
-.soft {
-  background: #f8faf9;
+.soft { background:#f8faf9; }
+
+h2 { margin:0 0 12px; }
+
+.header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 
-.heavy {
-  border-left: 6px solid #333;
+select,input[type="number"],input[type="text"],input[type="date"] {
+  border:none;
+  background:transparent;
+  font-size:14px;
 }
 
-h2 {
-  margin: 0 0 12px;
-}
+input:focus,select:focus { outline:none; }
 
 table {
-  width: 100%;
-  border-collapse: collapse;
+  width:100%;
+  border-collapse:collapse;
 }
 
-th, td {
-  padding: 8px;
-  border-bottom: 1px solid #eee;
-  text-align: left;
-}
-
-input[type="text"],
-input[type="number"],
-input[type="date"] {
-  width: 100%;
-  border: none;
-  background: transparent;
-  font-size: 14px;
-}
-
-input:focus {
-  outline: none;
-}
-
-.total {
-  text-align: right;
-  font-weight: bold;
-  margin-top: 8px;
+th,td {
+  padding:8px;
+  border-bottom:1px solid #eee;
+  text-align:left;
 }
 
 button {
-  margin-top: 8px;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 8px;
-  background: #007aff;
-  color: white;
-  cursor: pointer;
+  margin-top:8px;
+  padding:6px 12px;
+  border:none;
+  border-radius:8px;
+  background:#007aff;
+  color:#fff;
+  cursor:pointer;
 }
 
-button:hover {
-  opacity: 0.9;
+button:hover { opacity:.9; }
+
+.total {
+  text-align:right;
+  font-weight:600;
+  margin-top:8px;
 }
 
-.paid {
-  opacity: 0.45;
-}
+/* Bills specific */
+.paid { opacity:.45; }
+.overdue { background:#fff5f5; }
+.unpaid { font-weight:600; }
+.remove { cursor:pointer; font-size:18px; color:#999; }
+.remove:hover { color:red; }
 
+/* Overview */
 .overview {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 10px 16px;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:10px 16px;
 }
-
-.positive { color: green; }
-.negative { color: red; }
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+.positive { color:green; }
+.negative { color:red; }
 </style>
 </head>
 
 <body>
 <div class="planner">
 
-  <!-- HEADER -->
-  <section class="card header">
-    <div>
-      <select id="month"></select>
-      <select id="year"></select>
-    </div>
-    <div>
-      Starting Balance $
-      <input type="number" id="startingBalance" value="0">
-    </div>
-  </section>
+<!-- HEADER -->
+<section class="card header">
+  <div>
+    <select id="month"></select>
+    <select id="year"></select>
+  </div>
+  <div>
+    Starting Balance $
+    <input type="number" id="startingBalance" value="0">
+  </div>
+</section>
 
-  <!-- INCOME -->
-  <section class="card">
-    <h2>Income</h2>
-    <table id="incomeTable"></table>
-    <button onclick="addRow('income')">+ Add Income</button>
-    <div class="total">Total Income: $<span id="incomeTotal">0</span></div>
-  </section>
+<!-- INCOME -->
+<section class="card">
+  <h2>Income</h2>
+  <table id="incomeTable">
+    <thead>
+      <tr><th>Date</th><th>Source</th><th>Amount</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <button type="button" onclick="addIncome()">+ Add Income</button>
+  <div class="total">Total Income: $<span id="incomeTotal">0.00</span></div>
+</section>
 
-  <!-- SAVINGS -->
-  <section class="card soft">
-    <h2>Savings</h2>
-    <table id="savingsTable"></table>
-    <button onclick="addRow('savings')">+ Add Savings</button>
-    <div class="total">Total Savings: $<span id="savingsTotal">0</span></div>
-  </section>
+<!-- SAVINGS -->
+<section class="card soft">
+  <h2>Savings</h2>
+  <table id="savingsTable">
+    <thead>
+      <tr><th>Description</th><th>Amount</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <button type="button" onclick="addSavings()">+ Add Savings</button>
+  <div class="total">Total Savings: $<span id="savingsTotal">0.00</span></div>
+</section>
 
-  <!-- BILLS -->
-  
-    <section class="card">
+<!-- BILLS -->
+<section class="card">
   <h2>Bills & Fixed Expenses</h2>
-
   <table id="billsTable">
     <thead>
       <tr>
@@ -153,113 +148,112 @@ button:hover {
     </thead>
     <tbody></tbody>
   </table>
-
   <button type="button" onclick="addBill()">+ Add Bill</button>
-
-  <div class="total">
-    Total Bills Due: $<span id="billsTotal">0.00</span>
-  </div>
+  <div class="total">Total Bills Due: $<span id="billsTotal">0.00</span></div>
 </section>
 
-  <!-- DEBT -->
-  <section class="card heavy">
-    <h2>Debt</h2>
-    <table id="debtTable"></table>
-    <button onclick="addRow('debt')">+ Add Debt</button>
-    <div class="total">Debt Payments: $<span id="debtTotal">0</span></div>
-  </section>
-
-  <!-- OVERVIEW -->
-  <section class="card">
-    <h2>This Month’s Financial Overview</h2>
-    <div class="overview">
-      <div>Opening Balance</div><div id="oBalance">$0</div>
-      <div>Total Income</div><div id="oIncome">$0</div>
-      <div>Total Expenses</div><div id="oExpenses">$0</div>
-      <div>Difference</div><div id="oDiff">$0</div>
-      <div>Total Savings</div><div id="oSavings">$0</div>
-      <div>Balance Forward</div><div id="oForward">$0</div>
-    </div>
-  </section>
+<!-- OVERVIEW -->
+<section class="card">
+  <h2>This Month’s Financial Overview</h2>
+  <div class="overview">
+    <div>Opening Balance</div><div id="oStart">$0.00</div>
+    <div>Total Income</div><div id="oIncome">$0.00</div>
+    <div>Total Bills</div><div id="oBills">$0.00</div>
+    <div>Difference</div><div id="oDiff">$0.00</div>
+    <div>Total Savings</div><div id="oSavings">$0.00</div>
+    <div>Balance Forward</div><div id="oForward">$0.00</div>
+  </div>
+</section>
 
 </div>
 
 <script>
-const tables = {
-  income: ["Date","Source","Amount"],
-  savings: ["Description","Amount"],
-  bills: ["Paid","Bill","Due","Amount"],
-  debt: ["Description","Amount"]
-};
+/* Month / Year */
+const mSel=document.getElementById("month");
+const ySel=document.getElementById("year");
+const now=new Date();
+for(let i=0;i<12;i++) mSel.innerHTML+=`<option>${new Date(0,i).toLocaleString('default',{month:'long'})}</option>`;
+for(let y=2024;y<2035;y++) ySel.innerHTML+=`<option>${y}</option>`;
+mSel.value=new Date(0,now.getMonth()).toLocaleString('default',{month:'long'});
+ySel.value=now.getFullYear();
 
-function setupMonthYear() {
-  const m = document.getElementById("month");
-  const y = document.getElementById("year");
-  const now = new Date();
-  for(let i=0;i<12;i++) m.innerHTML += `<option>${new Date(0,i).toLocaleString('default',{month:'long'})}</option>`;
-  for(let i=2024;i<2035;i++) y.innerHTML += `<option>${i}</option>`;
-  m.value = new Date(0,now.getMonth()).toLocaleString('default',{month:'long'});
-  y.value = now.getFullYear();
+/* Income */
+function addIncome(){
+  const tr=document.createElement("tr");
+  tr.innerHTML=`
+    <td><input type="date"></td>
+    <td><input type="text"></td>
+    <td><input type="number" value="0"></td>`;
+  tr.querySelectorAll("input").forEach(i=>i.oninput=updateOverview);
+  incomeTable.querySelector("tbody").appendChild(tr);
 }
 
-function addRow(type) {
-  const table = document.getElementById(type+"Table");
-  if(!table.tHead){
-    table.innerHTML = "<thead><tr>"+tables[type].map(h=>`<th>${h}</th>`).join("")+"</tr></thead><tbody></tbody>";
-  }
-  const tr = document.createElement("tr");
-  tables[type].forEach(h=>{
-    const td = document.createElement("td");
-    if(h==="Paid"){
-      const cb = document.createElement("input");
-      cb.type="checkbox";
-      cb.onchange=()=>tr.classList.toggle("paid",cb.checked);
-      td.appendChild(cb);
-    } else {
-      const input = document.createElement("input");
-      input.type = h==="Amount" ? "number" : h==="Due"||h==="Date" ? "date" : "text";
-      input.oninput = updateTotals;
-      td.appendChild(input);
-    }
-    tr.appendChild(td);
+/* Savings */
+function addSavings(){
+  const tr=document.createElement("tr");
+  tr.innerHTML=`
+    <td><input type="text"></td>
+    <td><input type="number" value="0"></td>`;
+  tr.querySelectorAll("input").forEach(i=>i.oninput=updateOverview);
+  savingsTable.querySelector("tbody").appendChild(tr);
+}
+
+/* Bills */
+function addBill(){
+  const tr=document.createElement("tr");
+  tr.innerHTML=`
+    <td><input type="checkbox" class="paid"></td>
+    <td><input type="text"></td>
+    <td><input type="date" class="due"></td>
+    <td><input type="number" class="amount" value="0"></td>
+    <td class="unpaid">$0.00</td>
+    <td><span class="remove">×</span></td>`;
+  tr.querySelector(".remove").onclick=()=>{tr.remove();updateOverview();};
+  tr.querySelectorAll("input").forEach(i=>i.oninput=updateOverview);
+  billsTable.querySelector("tbody").appendChild(tr);
+}
+
+/* Calculations */
+function sum(selector){
+  let t=0;
+  document.querySelectorAll(selector).forEach(i=>t+=Number(i.value)||0);
+  return t;
+}
+
+function updateOverview(){
+  const income=sum("#incomeTable tbody input[type=number]");
+  const savings=sum("#savingsTable tbody input[type=number]");
+  let bills=0;
+  const today=new Date().toISOString().split("T")[0];
+
+  document.querySelectorAll("#billsTable tbody tr").forEach(r=>{
+    const paid=r.querySelector(".paid").checked;
+    const amt=Number(r.querySelector(".amount").value)||0;
+    const due=r.querySelector(".due").value;
+    r.classList.toggle("paid",paid);
+    r.classList.toggle("overdue",!paid&&due&&due<today);
+    r.querySelector(".unpaid").textContent=paid?"$0.00":`$${amt.toFixed(2)}`;
+    if(!paid) bills+=amt;
   });
-  table.querySelector("tbody").appendChild(tr);
-}
-
-function sumTable(id){
-  let sum=0;
-  document.querySelectorAll(`#${id}Table tbody tr`).forEach(r=>{
-    const amt = r.querySelector("input[type='number']");
-    if(amt) sum+=Number(amt.value)||0;
-  });
-  return sum;
-}
-
-function updateTotals(){
-  const income = sumTable("income");
-  const savings = sumTable("savings");
-  const bills = sumTable("bills");
-  const debt = sumTable("debt");
-  const start = Number(startingBalance.value)||0;
-  const expenses = bills+debt;
-  const diff = income-expenses;
-  const forward = start+diff-savings;
 
   incomeTotal.textContent=income.toFixed(2);
   savingsTotal.textContent=savings.toFixed(2);
   billsTotal.textContent=bills.toFixed(2);
-  debtTotal.textContent=debt.toFixed(2);
 
-  oBalance.textContent=start.toFixed(2);
+  const start=Number(startingBalance.value)||0;
+  const diff=income-bills;
+  const forward=start+diff-savings;
+
+  oStart.textContent=start.toFixed(2);
   oIncome.textContent=income.toFixed(2);
-  oExpenses.textContent=expenses.toFixed(2);
+  oBills.textContent=bills.toFixed(2);
   oDiff.textContent=diff.toFixed(2);
   oSavings.textContent=savings.toFixed(2);
   oForward.textContent=forward.toFixed(2);
-  oDiff.className = diff>=0?"positive":"negative";
+  oDiff.className=diff>=0?"positive":"negative";
 }
 
-setupMonthYear();
+startingBalance.oninput=updateOverview;
 </script>
 </body>
 </html>
