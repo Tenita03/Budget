@@ -3,363 +3,683 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Paycheck Tracker – Planner Style v18</title>
+<title>Paycheck Tracker – Calm Planner v19</title>
 
 <style>
+:root{
+  --bg:#f3f4f6;
+  --card:#ffffff;
+  --soft:#f8fafc;
+  --text:#0f172a;
+  --muted:#64748b;
+  --line:#e5e7eb;
+  --brand:#007aff;
+  --danger:#fff1f2;
+  --warn:#fffbeb;
+  --shadow:0 10px 30px rgba(0,0,0,.06);
+  --radius:16px;
+}
+
+*{ box-sizing:border-box; }
+
 body{
-  background:#f4f5f7;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
 }
-.planner{max-width:1100px;margin:auto;padding:16px;}
+
+.wrap{
+  max-width:1100px;
+  margin:auto;
+  padding:16px;
+  padding-bottom:80px;
+}
+
 .card{
-  background:#fff;border-radius:14px;padding:16px;margin-bottom:18px;
-  box-shadow:0 6px 20px rgba(0,0,0,.06);
-}
-.soft{background:#f8faf9;}
-.heavy{border-left:6px solid #333;}
-h2{margin:0 0 12px;}
-
-.header{
-  display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+  background:var(--card);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:16px;
+  margin-bottom:14px;
 }
 
-select,input{
-  border:none;background:transparent;font-size:14px;
+.soft{ background:var(--soft); }
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
 }
-input:focus,select:focus{outline:none;}
 
-table{width:100%;border-collapse:collapse;}
-th,td{padding:8px;border-bottom:1px solid #eee;text-align:left;vertical-align:top;}
-
-button{
-  padding:6px 12px;border:none;border-radius:8px;
-  background:#007aff;color:#fff;cursor:pointer;
+.topbar .left,
+.topbar .right{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
 }
-button.secondary{background:#999;}
-button:disabled{opacity:.55;cursor:not-allowed;}
 
-.remove{cursor:pointer;font-size:18px;color:#999;}
-.remove:hover{color:red;}
+select, input{
+  font-size:14px;
+  border:1px solid transparent;
+  background:transparent;
+  padding:8px 10px;
+  border-radius:10px;
+}
 
-.total{text-align:right;font-weight:600;margin-top:8px;}
+select:hover, input:hover{ background:rgba(0,0,0,.04); }
+select:focus, input:focus{
+  outline:none;
+  border-color:rgba(0,122,255,.35);
+  background:#fff;
+}
 
-.remaining{display:flex;justify-content:space-between;align-items:center;}
-.remaining strong{font-size:26px;}
-.remaining.positive strong{color:green;}
-.remaining.negative strong{color:red;}
+.btn{
+  border:none;
+  border-radius:12px;
+  padding:10px 12px;
+  font-size:14px;
+  cursor:pointer;
+  background:var(--brand);
+  color:#fff;
+}
 
-.paid-row{opacity:.35;}
-.overdue{background:#fff5f5;}
-.due-today{background:#fffbea;}
+.btn.secondary{ background:#94a3b8; }
+.btn.ghost{
+  background:transparent;
+  border:1px solid var(--line);
+  color:var(--text);
+}
 
-.debt-meta{font-size:12px;color:#666;}
-.time-killed{font-size:12px;color:#0a7a0a;}
+.kpi{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.kpi .label{
+  color:var(--muted);
+  font-weight:600;
+}
+
+.kpi .value{
+  font-size:34px;
+  font-weight:800;
+}
+
+.kpi.positive .value{ color:#15803d; }
+.kpi.negative .value{ color:#b91c1c; }
+
+.subnote{
+  margin-top:8px;
+  font-size:13px;
+  color:var(--muted);
+}
+
+.section-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  cursor:pointer;
+}
+
+.section-head h2{
+  margin:0;
+  font-size:18px;
+}
+
+.chev{
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:4px 8px;
+}
+
+.section-body{ margin-top:12px; }
+.collapsed .section-body{ display:none; }
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+thead th{
+  font-size:12px;
+  color:var(--muted);
+  text-align:left;
+  padding:8px;
+  border-bottom:1px solid var(--line);
+}
+
+tbody td{
+  padding:8px;
+  border-bottom:1px solid var(--line);
+}
+
+.right{ text-align:right; }
+.cell-tight{ width:1%; white-space:nowrap; }
+
+.remove{
+  font-size:18px;
+  cursor:pointer;
+  color:#94a3b8;
+}
+
+.remove:hover{ color:#ef4444; }
+
+.group-row td{
+  font-size:12px;
+  color:var(--muted);
+  font-weight:700;
+  padding-top:14px;
+  border-bottom:none;
+}
+
+.bill-paid{ opacity:.4; }
+.bill-overdue{ background:var(--danger); }
+.bill-today{ background:var(--warn); }
+
+.totalbar{
+  display:flex;
+  justify-content:flex-end;
+  gap:20px;
+  margin-top:10px;
+  font-size:13px;
+  color:var(--muted);
+}
+
+.overview{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:10px 16px;
+}
+
+.overview .k{ color:var(--muted); font-weight:600; }
+.overview .v{ font-weight:800; text-align:right; }
 
 .locked input,
 .locked select,
-.locked .remove,
-.locked button.add-btn{
+.locked button,
+.locked .remove{
   pointer-events:none;
   opacity:.6;
 }
 
-.overview{
-  display:grid;grid-template-columns:1fr auto;gap:10px 16px;
-}
-.positive{color:green;}
-.negative{color:red;}
-
-.lock-note{font-size:13px;color:#666;margin-top:8px;}
+.focus-hide{ display:none !important; }
 </style>
 </head>
 
 <body>
-<div class="planner" id="appRoot">
+<div class="wrap" id="app">
 
-<!-- HEADER -->
-<section class="card header">
-  <div>
-    <select id="month"></select>
-    <select id="year"></select>
-  </div>
-  <div>
-    Starting Balance $
-    <input type="number" id="startingBalance" value="0">
-  </div>
-  <div>
-    <button id="lockBtn" class="secondary">🔓 Lock Month</button>
-  </div>
-</section>
+  <!-- HEADER -->
+  <section class="card">
+    <div class="topbar">
+      <div class="left">
+        <select id="monthSel"></select>
+        <select id="yearSel"></select>
+        <span>
+          Starting Balance $
+          <input id="startingBalance" type="number" value="0" style="width:120px;text-align:right;">
+        </span>
+      </div>
+      <div class="right">
+        <button class="btn ghost" id="focusBtn">🎯 Debt Focus</button>
+        <button class="btn secondary" id="printBtn">🖨️ Print</button>
+        <button class="btn secondary" id="lockBtn">🔓 Lock Month</button>
+      </div>
+    </div>
+    <div class="subnote" id="lockNote"></div>
+  </section>
 
-<!-- REMAINING -->
-<section class="card">
-  <div class="remaining" id="remainingMeter">
-    <span>Remaining This Month</span>
-    <strong id="remainingAmount">$0.00</strong>
-  </div>
-  <div class="lock-note" id="lockNote"></div>
-</section>
+  <!-- REMAINING -->
+  <section class="card">
+    <div class="kpi" id="remainingKpi">
+      <div class="label">Remaining This Month</div>
+      <div class="value" id="remainingAmt">$0.00</div>
+    </div>
+    <div class="subnote" id="statusMsg">Ready.</div>
+  </section>
 
-<!-- INCOME -->
-<section class="card">
-  <h2>Income</h2>
-  <table id="incomeTable">
-    <thead><tr><th>Date</th><th>Source</th><th>Amount</th><th></th></tr></thead>
-    <tbody></tbody>
-  </table>
-  <button class="add-btn" onclick="addIncome()">+ Add Income</button>
-  <div class="total">Total Income: $<span id="incomeTotal">0.00</span></div>
-</section>
+  <!-- INCOME -->
+  <section class="card" id="incomeCard">
+    <div class="section-head">
+      <h2>Income</h2>
+      <span class="chev">⌄</span>
+    </div>
+    <div class="section-body">
+      <table>
+        <thead><tr><th>Date</th><th>Source</th><th class="right">Amount</th><th></th></tr></thead>
+        <tbody id="incomeTable"></tbody>
+      </table>
+      <button class="btn" id="addIncomeBtn">+ Add Income</button>
+    </div>
+  </section>
 
-<!-- SAVINGS -->
-<section class="card soft">
-  <h2>Monthly Savings</h2>
-  <table id="savingsTable">
-    <thead><tr><th>Purpose</th><th>Amount</th><th></th></tr></thead>
-    <tbody></tbody>
-  </table>
-  <button class="add-btn" onclick="addSavings()">+ Add Savings</button>
-  <div class="total">Total Savings: $<span id="savingsTotal">0.00</span></div>
-</section>
+  <!-- SAVINGS -->
+  <section class="card soft" id="savingsCard">
+    <div class="section-head">
+      <h2>Monthly Savings</h2>
+      <span class="chev">⌄</span>
+    </div>
+    <div class="section-body">
+      <table>
+        <thead><tr><th>Purpose</th><th class="right">Amount</th><th></th></tr></thead>
+        <tbody id="savingsTable"></tbody>
+      </table>
+      <button class="btn" id="addSavingsBtn">+ Add Savings</button>
+    </div>
+  </section>
 
-<!-- BILLS -->
-<section class="card">
-  <h2>Bills & Fixed Expenses</h2>
-  <table id="billsTable">
-    <thead>
-      <tr>
-        <th>✔</th>
-        <th>Bill</th>
-        <th>Due</th>
-        <th>Amount</th>
-        <th>Linked Debt</th>
-        <th>Type</th>
-        <th>Remaining</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-  <button class="add-btn" onclick="addBill()">+ Add Bill</button>
-  <div class="total">Bills Remaining: $<span id="billsRemaining">0.00</span></div>
-</section>
+  <!-- BILLS -->
+  <section class="card" id="billsCard">
+    <div class="section-head">
+      <h2>Bills</h2>
+      <span class="chev">⌄</span>
+    </div>
+    <div class="section-body">
+      <table>
+        <thead>
+          <tr>
+            <th>✔</th>
+            <th>Bill</th>
+            <th>Due</th>
+            <th class="right">Amount</th>
+            <th>Linked Debt</th>
+            <th>Type</th>
+            <th class="right">Remaining</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="billsTable"></tbody>
+      </table>
+      <button class="btn" id="addBillBtn">+ Add Bill</button>
+    </div>
+  </section>
 
-<!-- DEBT -->
-<section class="card heavy">
-  <h2>Debt</h2>
-  <table id="debtTable">
-    <thead>
-      <tr>
-        <th>Debt</th>
-        <th>Balance</th>
-        <th>APR %</th>
-        <th>Payment</th>
-        <th>Extra</th>
-        <th>Interest</th>
-        <th>Principal</th>
-        <th>New Balance</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-  <button class="add-btn" onclick="addDebt()">+ Add Debt</button>
-  <div class="total">Debt Outflow: $<span id="debtOutflow">0.00</span></div>
-</section>
+  <!-- DEBT -->
+  <section class="card" id="debtCard">
+    <div class="section-head">
+      <h2>Debt</h2>
+      <span class="chev">⌄</span>
+    </div>
+    <div class="section-body">
+      <table>
+        <thead>
+          <tr>
+            <th>Debt</th>
+            <th class="right">Balance</th>
+            <th class="right">APR %</th>
+            <th class="right">Payment</th>
+            <th class="right">Extra</th>
+            <th class="right">Interest</th>
+            <th class="right">Principal</th>
+            <th class="right">New Balance</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="debtTable"></tbody>
+      </table>
+      <button class="btn" id="addDebtBtn">+ Add Debt</button>
+    </div>
+  </section>
 
-<!-- OVERVIEW -->
-<section class="card">
-  <h2>This Month’s Financial Overview</h2>
-  <div class="overview">
-    <div>Opening Balance</div><div id="oStart">$0.00</div>
-    <div>Total Income</div><div id="oIncome">$0.00</div>
-    <div>Bills</div><div id="oBills">$0.00</div>
-    <div>Debt</div><div id="oDebt">$0.00</div>
-    <div>Savings</div><div id="oSavings">$0.00</div>
-    <div>Difference</div><div id="oDiff">$0.00</div>
-    <div>Balance Forward</div><div id="oForward">$0.00</div>
-  </div>
-</section>
+  <!-- OVERVIEW -->
+  <section class="card">
+    <h2>Monthly Overview</h2>
+    <div class="overview">
+      <div class="k">Opening Balance</div><div class="v" id="oStart">$0.00</div>
+      <div class="k">Income</div><div class="v" id="oIncome">$0.00</div>
+      <div class="k">Bills</div><div class="v" id="oBills">$0.00</div>
+      <div class="k">Debt</div><div class="v" id="oDebt">$0.00</div>
+      <div class="k">Savings</div><div class="v" id="oSavings">$0.00</div>
+      <div class="k">Balance Forward</div><div class="v" id="oForward">$0.00</div>
+    </div>
+  </section>
 
 </div>
 
+<!-- PART 2 (JavaScript) WILL GO BELOW THIS LINE -->
+
 <script>
-/* ================= SETUP ================= */
-const monthSel=month, yearSel=year;
-const now=new Date();
-for(let i=0;i<12;i++) monthSel.innerHTML+=`<option value="${i}">${new Date(0,i).toLocaleString('default',{month:'long'})}</option>`;
-for(let y=2024;y<2036;y++) yearSel.innerHTML+=`<option value="${y}">${y}</option>`;
-monthSel.value=now.getMonth(); yearSel.value=now.getFullYear();
+/* =========================
+   Paycheck Tracker v19
+   Calm Planner Engine
+========================= */
 
-let locked=false;
+const $ = id => document.getElementById(id);
+const app = $("app");
 
-/* ================= HELPERS ================= */
-const num=v=>Number(v)||0;
-const money=v=>`$${num(v).toFixed(2)}`;
-function key(){return `planner-${yearSel.value}-${String(monthSel.value).padStart(2,"0")}`}
+const monthSel = $("monthSel");
+const yearSel  = $("yearSel");
+const startingBalance = $("startingBalance");
 
-/* ================= ROW ADDERS ================= */
-function addRemove(tr){
-  const td=document.createElement("td");
-  td.innerHTML=`<span class="remove">×</span>`;
-  td.onclick=()=>{tr.remove();updateAll(true)};
-  tr.appendChild(td);
+const incomeTable  = $("incomeTable");
+const savingsTable = $("savingsTable");
+const billsTable   = $("billsTable");
+const debtTable    = $("debtTable");
+
+const addIncomeBtn  = $("addIncomeBtn");
+const addSavingsBtn = $("addSavingsBtn");
+const addBillBtn    = $("addBillBtn");
+const addDebtBtn    = $("addDebtBtn");
+
+const remainingAmt = $("remainingAmt");
+const remainingKpi = $("remainingKpi");
+const statusMsg    = $("statusMsg");
+
+const lockBtn  = $("lockBtn");
+const lockNote = $("lockNote");
+const focusBtn = $("focusBtn");
+const printBtn = $("printBtn");
+
+const oStart   = $("oStart");
+const oIncome  = $("oIncome");
+const oBills   = $("oBills");
+const oDebt    = $("oDebt");
+const oSavings = $("oSavings");
+const oForward = $("oForward");
+
+let locked = false;
+let debtFocus = false;
+
+/* -------------------------
+   Helpers
+------------------------- */
+const num = v => Number(v) || 0;
+const money = v => `$${num(v).toFixed(2)}`;
+
+function uid(){
+  return Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 }
 
-function addIncome(){
-  const tr=document.createElement("tr");
-  tr.innerHTML=`<td><input type="date"></td><td><input></td><td><input type="number" value="0"></td>`;
-  addRemove(tr);
-  tr.querySelectorAll("input").forEach(i=>i.oninput=()=>updateAll(true));
-  incomeTable.tBodies[0].appendChild(tr);
+function storageKey(){
+  return `planner-v19-${yearSel.value}-${monthSel.value}`;
 }
 
-function addSavings(){
-  const tr=document.createElement("tr");
-  tr.innerHTML=`<td><input></td><td><input type="number" value="0"></td>`;
-  addRemove(tr);
-  tr.querySelectorAll("input").forEach(i=>i.oninput=()=>updateAll(true));
-  savingsTable.tBodies[0].appendChild(tr);
+/* -------------------------
+   Month / Year
+------------------------- */
+(function initMonthYear(){
+  const now = new Date();
+  for(let i=0;i<12;i++){
+    const o=document.createElement("option");
+    o.value=i;
+    o.textContent=new Date(0,i).toLocaleString("default",{month:"long"});
+    monthSel.appendChild(o);
+  }
+  for(let y=2024;y<2036;y++){
+    const o=document.createElement("option");
+    o.value=y;
+    o.textContent=y;
+    yearSel.appendChild(o);
+  }
+  monthSel.value=now.getMonth();
+  yearSel.value=now.getFullYear();
+})();
+
+/* -------------------------
+   Collapsible sections
+------------------------- */
+document.querySelectorAll(".section-head").forEach(head=>{
+  head.onclick=()=>{
+    if(locked) return;
+    const card=head.closest(".card");
+    card.classList.toggle("collapsed");
+    saveAll();
+  };
+});
+
+/* -------------------------
+   Lock month
+------------------------- */
+lockBtn.onclick=()=>{
+  locked=!locked;
+  app.classList.toggle("locked",locked);
+  lockBtn.textContent=locked?"🔒 Unlock":"🔓 Lock Month";
+  lockNote.textContent=locked?"This month is locked to preserve history.":"";
+  statusMsg.textContent=locked?"Month locked.":"Month unlocked.";
+  saveAll();
+};
+
+/* -------------------------
+   Debt focus
+------------------------- */
+focusBtn.onclick=()=>{
+  debtFocus=!debtFocus;
+  ["incomeCard","savingsCard"].forEach(id=>{
+    $(id).classList.toggle("focus-hide",debtFocus);
+  });
+  focusBtn.textContent=debtFocus?"🧭 Exit Focus":"🎯 Debt Focus";
+};
+
+/* -------------------------
+   Row builders
+------------------------- */
+function addRemove(td,row){
+  td.innerHTML="×";
+  td.className="remove";
+  td.onclick=()=>{
+    if(locked) return;
+    row.remove();
+    updateAll();
+  };
 }
 
-function addDebt(){
+function addIncomeRow(data={}){
   const tr=document.createElement("tr");
   tr.innerHTML=`
-    <td><input class="dname"></td>
-    <td><input type="number" class="balance" value="0"></td>
-    <td><input type="number" class="apr" value="0"></td>
-    <td><input type="number" class="payment" value="0"></td>
-    <td><input type="number" class="extra" value="0"></td>
-    <td class="interest">$0.00</td>
-    <td class="principal">$0.00</td>
-    <td class="newbal">$0.00</td>`;
-  addRemove(tr);
-  tr.querySelectorAll("input").forEach(i=>i.oninput=()=>updateAll(true));
-  debtTable.tBodies[0].appendChild(tr);
+    <td><input type="date" value="${data.date||""}"></td>
+    <td><input value="${data.source||""}"></td>
+    <td class="right"><input type="number" value="${data.amount||0}"></td>
+    <td class="cell-tight"></td>`;
+  addRemove(tr.lastElementChild,tr);
+  tr.querySelectorAll("input").forEach(i=>i.oninput=updateAll);
+  incomeTable.appendChild(tr);
 }
 
-function addBill(){
+function addSavingsRow(data={}){
   const tr=document.createElement("tr");
   tr.innerHTML=`
-    <td><input type="checkbox" class="paid"></td>
-    <td><input></td>
-    <td><input type="date" class="due"></td>
-    <td><input type="number" class="amount" value="0"></td>
-    <td><select class="link"><option value="">—</option></select></td>
+    <td><input value="${data.purpose||""}"></td>
+    <td class="right"><input type="number" value="${data.amount||0}"></td>
+    <td class="cell-tight"></td>`;
+  addRemove(tr.lastElementChild,tr);
+  tr.querySelectorAll("input").forEach(i=>i.oninput=updateAll);
+  savingsTable.appendChild(tr);
+}
+
+function addDebtRow(data={}){
+  const tr=document.createElement("tr");
+  tr.innerHTML=`
+    <td><input value="${data.name||""}"></td>
+    <td class="right"><input type="number" value="${data.balance||0}"></td>
+    <td class="right"><input type="number" value="${data.apr||0}"></td>
+    <td class="right"><input type="number" value="${data.payment||0}"></td>
+    <td class="right"><input type="number" value="${data.extra||0}"></td>
+    <td class="right">$0.00</td>
+    <td class="right">$0.00</td>
+    <td class="right">$0.00</td>
+    <td class="cell-tight"></td>`;
+  addRemove(tr.lastElementChild,tr);
+  tr.querySelectorAll("input").forEach(i=>i.oninput=updateAll);
+  debtTable.appendChild(tr);
+}
+
+function addBillRow(data={}){
+  const tr=document.createElement("tr");
+  tr.innerHTML=`
+    <td><input type="checkbox" ${data.paid?"checked":""}></td>
+    <td><input value="${data.name||""}"></td>
+    <td><input type="date" value="${data.due||""}"></td>
+    <td class="right"><input type="number" value="${data.amount||0}"></td>
+    <td><select></select></td>
     <td>
-      <select class="ptype">
+      <select>
         <option value="regular">Regular</option>
         <option value="principal">Extra Principal</option>
       </select>
     </td>
-    <td class="remaining">$0.00</td>`;
-  addRemove(tr);
-  tr.querySelectorAll("input,select").forEach(i=>i.oninput=()=>updateAll(true));
-  billsTable.tBodies[0].appendChild(tr);
+    <td class="right">$0.00</td>
+    <td class="cell-tight"></td>`;
+  addRemove(tr.lastElementChild,tr);
+  tr.querySelectorAll("input,select").forEach(i=>i.oninput=updateAll);
+  billsTable.appendChild(tr);
+  updateDebtLinks();
 }
 
-/* ================= CORE LOGIC ================= */
+/* -------------------------
+   Buttons
+------------------------- */
+addIncomeBtn.onclick = ()=>!locked&&addIncomeRow();
+addSavingsBtn.onclick= ()=>!locked&&addSavingsRow();
+addDebtBtn.onclick   = ()=>!locked&&addDebtRow();
+addBillBtn.onclick   = ()=>!locked&&addBillRow();
+
+/* -------------------------
+   Core calculation
+------------------------- */
 function updateDebtLinks(){
-  const names=[...debtTable.tBodies[0].rows].map(r=>r.querySelector(".dname").value);
-  document.querySelectorAll(".link").forEach(sel=>{
+  const names=[...debtTable.querySelectorAll("tr")].map(r=>r.children[0].querySelector("input").value).filter(Boolean);
+  billsTable.querySelectorAll("tr").forEach(r=>{
+    const sel=r.children[4].querySelector("select");
     const cur=sel.value;
-    sel.innerHTML=`<option value="">—</option>`+
-      names.map(n=>`<option ${n===cur?"selected":""}>${n}</option>`).join("");
+    sel.innerHTML=`<option value="">—</option>`+names.map(n=>`<option>${n}</option>`).join("");
+    sel.value=cur;
   });
 }
 
-function updateAll(save){
+function updateAll(){
+  let income=0,savings=0,bills=0,debtOut=0;
   updateDebtLinks();
 
-  let income=0,savings=0,billsRemaining=0,debtOut=0;
-  const today=new Date().toISOString().split("T")[0];
-
-  [...incomeTable.tBodies[0].rows].forEach(r=>income+=num(r.children[2].querySelector("input").value));
-  [...savingsTable.tBodies[0].rows].forEach(r=>savings+=num(r.children[1].querySelector("input").value));
+  incomeTable.querySelectorAll("tr").forEach(r=>income+=num(r.children[2].querySelector("input").value));
+  savingsTable.querySelectorAll("tr").forEach(r=>savings+=num(r.children[1].querySelector("input").value));
 
   const debtMap={};
-  [...debtTable.tBodies[0].rows].forEach(r=>{
-    const name=r.querySelector(".dname").value;
-    debtMap[name]=r;
+  debtTable.querySelectorAll("tr").forEach(r=>{
+    const name=r.children[0].querySelector("input").value;
+    debtMap[name]={row:r,linkedPay:0,linkedExtra:0};
   });
 
-  [...billsTable.tBodies[0].rows].forEach(r=>{
-    const paid=r.querySelector(".paid").checked;
-    const amt=num(r.querySelector(".amount").value);
-    const due=r.querySelector(".due").value;
-    const link=r.querySelector(".link").value;
-    const type=r.querySelector(".ptype").value;
-
-    r.classList.toggle("paid-row",paid);
-    r.classList.toggle("overdue",!paid&&due&&due<today);
-    r.classList.toggle("due-today",!paid&&due===today);
-
-    if(!paid) billsRemaining+=amt;
-    r.querySelector(".remaining").textContent=paid?money(0):money(amt);
-
+  billsTable.querySelectorAll("tr").forEach(r=>{
+    const paid=r.children[0].querySelector("input").checked;
+    const amt=num(r.children[3].querySelector("input").value);
+    const link=r.children[4].querySelector("select").value;
+    const type=r.children[5].querySelector("select").value;
+    if(!paid) bills+=amt;
+    r.children[6].textContent=paid?money(0):money(amt);
     if(paid && link && debtMap[link]){
-      const d=debtMap[link];
-      if(type==="principal"){
-        d.querySelector(".extra").value =
-          num(d.querySelector(".extra").value)+amt;
-      }else{
-        d.querySelector(".payment").value =
-          num(d.querySelector(".payment").value)+amt;
-      }
+      type==="principal"?debtMap[link].linkedExtra+=amt:debtMap[link].linkedPay+=amt;
     }
   });
 
-  [...debtTable.tBodies[0].rows].forEach(r=>{
-    const bal=num(r.querySelector(".balance").value);
-    const apr=num(r.querySelector(".apr").value);
-    const pay=num(r.querySelector(".payment").value);
-    const extra=num(r.querySelector(".extra").value);
+  debtTable.querySelectorAll("tr").forEach(r=>{
+    const bal=num(r.children[1].querySelector("input").value);
+    const apr=num(r.children[2].querySelector("input").value);
+    const basePay=num(r.children[3].querySelector("input").value);
+    const extra=num(r.children[4].querySelector("input").value);
+    const name=r.children[0].querySelector("input").value;
+    const lp=debtMap[name]?.linkedPay||0;
+    const le=debtMap[name]?.linkedExtra||0;
 
     const interest=bal*(apr/100/12);
-    const principal=Math.max(pay-interest,0)+extra;
+    const principal=Math.max(basePay+lp-interest,0)+extra+le;
     const newBal=Math.max(bal-principal,0);
 
-    r.querySelector(".interest").textContent=money(interest);
-    r.querySelector(".principal").textContent=money(principal);
-    r.querySelector(".newbal").textContent=money(newBal);
+    r.children[5].textContent=money(interest);
+    r.children[6].textContent=money(principal);
+    r.children[7].textContent=money(newBal);
 
-    debtOut+=pay+extra;
+    debtOut+=basePay+extra+lp+le;
   });
 
-  incomeTotal.textContent=income.toFixed(2);
-  savingsTotal.textContent=savings.toFixed(2);
-  billsRemaining.textContent=billsRemaining.toFixed(2);
-  debtOutflow.textContent=debtOut.toFixed(2);
-
   const start=num(startingBalance.value);
-  const remaining=start+income-billsRemaining-debtOut-savings;
-  remainingAmount.textContent=money(remaining);
-  remainingMeter.className=`remaining ${remaining>=0?"positive":"negative"}`;
+  const remaining=start+income-bills-debtOut-savings;
+
+  remainingAmt.textContent=money(remaining);
+  remainingKpi.className="kpi "+(remaining>=0?"positive":"negative");
 
   oStart.textContent=money(start);
   oIncome.textContent=money(income);
-  oBills.textContent=money(billsRemaining);
+  oBills.textContent=money(bills);
   oDebt.textContent=money(debtOut);
   oSavings.textContent=money(savings);
-  oDiff.textContent=money(income-billsRemaining-debtOut);
   oForward.textContent=money(remaining);
 
-  if(save){
-    localStorage.setItem(key(),JSON.stringify({}));
-  }
+  saveAll();
 }
 
-/* ================= LOCK ================= */
-lockBtn.onclick=()=>{
-  locked=!locked;
-  appRoot.classList.toggle("locked",locked);
-  lockBtn.textContent=locked?"🔒 Unlock":"🔓 Lock Month";
-  lockNote.textContent=locked?"This month is locked to preserve history.":"";
-};
+/* -------------------------
+   Save / Load
+------------------------- */
+function saveAll(){
+  const data={
+    locked,
+    startingBalance:startingBalance.value,
+    income:[...incomeTable.querySelectorAll("tr")].map(r=>({
+      date:r.children[0].querySelector("input").value,
+      source:r.children[1].querySelector("input").value,
+      amount:r.children[2].querySelector("input").value
+    })),
+    savings:[...savingsTable.querySelectorAll("tr")].map(r=>({
+      purpose:r.children[0].querySelector("input").value,
+      amount:r.children[1].querySelector("input").value
+    })),
+    bills:[...billsTable.querySelectorAll("tr")].map(r=>({
+      paid:r.children[0].querySelector("input").checked,
+      name:r.children[1].querySelector("input").value,
+      due:r.children[2].querySelector("input").value,
+      amount:r.children[3].querySelector("input").value,
+      link:r.children[4].querySelector("select").value,
+      type:r.children[5].querySelector("select").value
+    })),
+    debt:[...debtTable.querySelectorAll("tr")].map(r=>({
+      name:r.children[0].querySelector("input").value,
+      balance:r.children[1].querySelector("input").value,
+      apr:r.children[2].querySelector("input").value,
+      payment:r.children[3].querySelector("input").value,
+      extra:r.children[4].querySelector("input").value
+    }))
+  };
+  localStorage.setItem(storageKey(),JSON.stringify(data));
+}
 
-startingBalance.oninput=()=>updateAll(true);
-monthSel.onchange=yearSel.onchange=()=>location.reload();
+function loadAll(){
+  const raw=localStorage.getItem(storageKey());
+  if(!raw){
+    addIncomeRow();addSavingsRow();addBillRow();addDebtRow();
+    return;
+  }
+  const d=JSON.parse(raw);
+  locked=!!d.locked;
+  app.classList.toggle("locked",locked);
+  lockBtn.textContent=locked?"🔒 Unlock":"🔓 Lock Month";
+  startingBalance.value=d.startingBalance||0;
+
+  incomeTable.innerHTML="";savingsTable.innerHTML="";billsTable.innerHTML="";debtTable.innerHTML="";
+  d.income.forEach(addIncomeRow);
+  d.savings.forEach(addSavingsRow);
+  d.bills.forEach(addBillRow);
+  d.debt.forEach(addDebtRow);
+  updateAll();
+}
+
+monthSel.onchange=yearSel.onchange=loadAll;
+startingBalance.oninput=updateAll;
+
+/* -------------------------
+   Print
+------------------------- */
+printBtn.onclick=()=>window.print();
+
+/* -------------------------
+   Init
+------------------------- */
+loadAll();
 </script>
+
 </body>
 </html>
