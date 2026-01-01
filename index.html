@@ -1,803 +1,365 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Paycheck Tracker – Planner Style v17</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paycheck Tracker – Planner Style v18</title>
 
 <style>
-  body{
-    background:#f4f5f7;
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-    margin:0;
-  }
-  .planner{max-width:1050px;margin:auto;padding:16px;}
-  .card{
-    background:#fff;border-radius:14px;padding:16px;margin-bottom:18px;
-    box-shadow:0 6px 20px rgba(0,0,0,.06);
-  }
-  .soft{background:#f8faf9;}
-  .heavy{border-left:6px solid #333;}
-  h2{margin:0 0 12px;}
-  .header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
-  select,input{
-    border:none;background:transparent;font-size:14px;
-  }
-  input:focus,select:focus{outline:none;}
-  table{width:100%;border-collapse:collapse;}
-  th,td{padding:8px;border-bottom:1px solid #eee;text-align:left;vertical-align:top;}
-  button{
-    padding:6px 12px;border:none;border-radius:8px;background:#007aff;color:#fff;cursor:pointer;
-  }
-  button.secondary{background:#999;}
-  button:disabled{opacity:.55;cursor:not-allowed;}
-  .row-actions{display:flex;gap:8px;align-items:center;}
-  .remove{cursor:pointer;font-size:18px;color:#999;user-select:none;}
-  .remove:hover{color:red;}
+body{
+  background:#f4f5f7;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  margin:0;
+}
+.planner{max-width:1100px;margin:auto;padding:16px;}
+.card{
+  background:#fff;border-radius:14px;padding:16px;margin-bottom:18px;
+  box-shadow:0 6px 20px rgba(0,0,0,.06);
+}
+.soft{background:#f8faf9;}
+.heavy{border-left:6px solid #333;}
+h2{margin:0 0 12px;}
 
-  /* Remaining meter */
-  .remaining{display:flex;justify-content:space-between;align-items:center;}
-  .remaining strong{font-size:26px;}
-  .remaining.positive strong{color:green;}
-  .remaining.negative strong{color:red;}
+.header{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+}
 
-  /* Bills visuals */
-  .paid-row{opacity:.35;}
-  .overdue{background:#fff5f5;}
-  .due-today{background:#fffbea;}
-  .unpaid{font-weight:600;}
+select,input{
+  border:none;background:transparent;font-size:14px;
+}
+input:focus,select:focus{outline:none;}
 
-  /* Debt visuals */
-  .debt-meta{font-size:12px;color:#666;line-height:1.35;}
-  .time-killed{font-size:12px;color:#0a7a0a;line-height:1.35;}
+table{width:100%;border-collapse:collapse;}
+th,td{padding:8px;border-bottom:1px solid #eee;text-align:left;vertical-align:top;}
 
-  /* Overview */
-  .overview{
-    display:grid;grid-template-columns:1fr auto;gap:10px 16px;
-  }
-  .positive{color:green;}
-  .negative{color:red;}
-  .total{ text-align:right; font-weight:600; margin-top:8px; }
+button{
+  padding:6px 12px;border:none;border-radius:8px;
+  background:#007aff;color:#fff;cursor:pointer;
+}
+button.secondary{background:#999;}
+button:disabled{opacity:.55;cursor:not-allowed;}
 
-  /* Locking */
-  .locked input, .locked select, .locked button.add-btn, .locked .remove {
-    pointer-events:none;
-    opacity:.65;
-  }
-  .lock-note{font-size:13px;color:#666;margin-top:8px;}
-  .summary-box{
-    border:1px solid #e8e8e8;border-radius:12px;padding:12px;background:#fcfcfc;
-  }
-  .summary-grid{
-    display:grid;grid-template-columns:1fr auto;gap:8px 16px;
-  }
+.remove{cursor:pointer;font-size:18px;color:#999;}
+.remove:hover{color:red;}
 
-  /* Print view button row */
-  .top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.total{text-align:right;font-weight:600;margin-top:8px;}
+
+.remaining{display:flex;justify-content:space-between;align-items:center;}
+.remaining strong{font-size:26px;}
+.remaining.positive strong{color:green;}
+.remaining.negative strong{color:red;}
+
+.paid-row{opacity:.35;}
+.overdue{background:#fff5f5;}
+.due-today{background:#fffbea;}
+
+.debt-meta{font-size:12px;color:#666;}
+.time-killed{font-size:12px;color:#0a7a0a;}
+
+.locked input,
+.locked select,
+.locked .remove,
+.locked button.add-btn{
+  pointer-events:none;
+  opacity:.6;
+}
+
+.overview{
+  display:grid;grid-template-columns:1fr auto;gap:10px 16px;
+}
+.positive{color:green;}
+.negative{color:red;}
+
+.lock-note{font-size:13px;color:#666;margin-top:8px;}
 </style>
 </head>
 
 <body>
 <div class="planner" id="appRoot">
 
-  <!-- HEADER -->
-  <section class="card header">
-    <div>
-      <select id="month"></select>
-      <select id="year"></select>
-    </div>
+<!-- HEADER -->
+<section class="card header">
+  <div>
+    <select id="month"></select>
+    <select id="year"></select>
+  </div>
+  <div>
+    Starting Balance $
+    <input type="number" id="startingBalance" value="0">
+  </div>
+  <div>
+    <button id="lockBtn" class="secondary">🔓 Lock Month</button>
+  </div>
+</section>
 
-    <div>
-      Starting Balance $
-      <input type="number" id="startingBalance" value="0">
-    </div>
+<!-- REMAINING -->
+<section class="card">
+  <div class="remaining" id="remainingMeter">
+    <span>Remaining This Month</span>
+    <strong id="remainingAmount">$0.00</strong>
+  </div>
+  <div class="lock-note" id="lockNote"></div>
+</section>
 
-    <div class="top-actions">
-      <button id="lockBtn" class="secondary">🔓 Lock Month</button>
-      <button id="printBtn" class="secondary">🖨️ Print / Save PDF</button>
-    </div>
-  </section>
+<!-- INCOME -->
+<section class="card">
+  <h2>Income</h2>
+  <table id="incomeTable">
+    <thead><tr><th>Date</th><th>Source</th><th>Amount</th><th></th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <button class="add-btn" onclick="addIncome()">+ Add Income</button>
+  <div class="total">Total Income: $<span id="incomeTotal">0.00</span></div>
+</section>
 
-  <!-- REMAINING -->
-  <section class="card">
-    <div class="remaining" id="remainingMeter">
-      <span>Remaining This Month</span>
-      <strong id="remainingAmount">$0.00</strong>
-    </div>
-    <div class="lock-note" id="lockNote"></div>
-  </section>
+<!-- SAVINGS -->
+<section class="card soft">
+  <h2>Monthly Savings</h2>
+  <table id="savingsTable">
+    <thead><tr><th>Purpose</th><th>Amount</th><th></th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <button class="add-btn" onclick="addSavings()">+ Add Savings</button>
+  <div class="total">Total Savings: $<span id="savingsTotal">0.00</span></div>
+</section>
 
-  <!-- INCOME -->
-  <section class="card">
-    <h2>Income</h2>
-    <table id="incomeTable">
-      <thead><tr><th>Date</th><th>Source</th><th>Amount</th><th></th></tr></thead>
-      <tbody></tbody>
-    </table>
-    <button class="add-btn" onclick="addIncome()">+ Add Income</button>
-    <div class="total">Total Income: $<span id="incomeTotal">0.00</span></div>
-  </section>
+<!-- BILLS -->
+<section class="card">
+  <h2>Bills & Fixed Expenses</h2>
+  <table id="billsTable">
+    <thead>
+      <tr>
+        <th>✔</th>
+        <th>Bill</th>
+        <th>Due</th>
+        <th>Amount</th>
+        <th>Linked Debt</th>
+        <th>Type</th>
+        <th>Remaining</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <button class="add-btn" onclick="addBill()">+ Add Bill</button>
+  <div class="total">Bills Remaining: $<span id="billsRemaining">0.00</span></div>
+</section>
 
-  <!-- SAVINGS -->
-  <section class="card soft">
-    <h2>Monthly Savings</h2>
-    <table id="savingsTable">
-      <thead><tr><th>Purpose</th><th>Amount</th><th></th></tr></thead>
-      <tbody></tbody>
-    </table>
-    <button class="add-btn" onclick="addSavings()">+ Add Savings</button>
-    <div class="total">Total Savings: $<span id="savingsTotal">0.00</span></div>
-  </section>
+<!-- DEBT -->
+<section class="card heavy">
+  <h2>Debt</h2>
+  <table id="debtTable">
+    <thead>
+      <tr>
+        <th>Debt</th>
+        <th>Balance</th>
+        <th>APR %</th>
+        <th>Payment</th>
+        <th>Extra</th>
+        <th>Interest</th>
+        <th>Principal</th>
+        <th>New Balance</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <button class="add-btn" onclick="addDebt()">+ Add Debt</button>
+  <div class="total">Debt Outflow: $<span id="debtOutflow">0.00</span></div>
+</section>
 
-  <!-- BILLS -->
-  <section class="card">
-    <h2>Bills & Fixed Expenses</h2>
-    <table id="billsTable">
-      <thead>
-        <tr>
-          <th>✔</th><th>Bill</th><th>Due</th><th>Amount</th><th>Remaining</th><th></th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <button class="add-btn" onclick="addBill()">+ Add Bill</button>
-
-    <div class="total">Bills Remaining: $<span id="billsRemainingTotal">0.00</span></div>
-    <div class="total" style="font-weight:500;color:#666;">Bills Planned: $<span id="billsPlannedTotal">0.00</span></div>
-  </section>
-
-  <!-- DEBT -->
-  <section class="card heavy">
-    <h2>Debt (Interest-Aware)</h2>
-    <table id="debtTable">
-      <thead>
-        <tr>
-          <th>Debt</th>
-          <th>Balance</th>
-          <th>APR %</th>
-          <th>Payment</th>
-          <th>Extra Principal</th>
-          <th>Monthly Interest</th>
-          <th>Principal Paid</th>
-          <th>New Balance</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <button class="add-btn" onclick="addDebt()">+ Add Debt</button>
-    <div class="total">Debt Outflow (Payment + Extra): $<span id="debtOutflowTotal">0.00</span></div>
-  </section>
-
-  <!-- OVERVIEW -->
-  <section class="card">
-    <h2>This Month’s Financial Overview</h2>
-    <div class="overview">
-      <div>Opening Balance</div><div id="oStart">$0.00</div>
-      <div>Total Income</div><div id="oIncome">$0.00</div>
-      <div>Bills Planned</div><div id="oBills">$0.00</div>
-      <div>Debt Outflow</div><div id="oDebt">$0.00</div>
-      <div>Savings</div><div id="oSavings">$0.00</div>
-      <div>Difference</div><div id="oDiff">$0.00</div>
-      <div>Balance Forward</div><div id="oForward">$0.00</div>
-    </div>
-  </section>
-
-  <!-- MONTHLY SUMMARY -->
-  <section class="card">
-    <h2>Monthly Summary</h2>
-    <div class="summary-box">
-      <div class="summary-grid" id="summaryGrid">
-        <div class="muted">Lock the month to generate a snapshot summary.</div><div></div>
-      </div>
-    </div>
-  </section>
+<!-- OVERVIEW -->
+<section class="card">
+  <h2>This Month’s Financial Overview</h2>
+  <div class="overview">
+    <div>Opening Balance</div><div id="oStart">$0.00</div>
+    <div>Total Income</div><div id="oIncome">$0.00</div>
+    <div>Bills</div><div id="oBills">$0.00</div>
+    <div>Debt</div><div id="oDebt">$0.00</div>
+    <div>Savings</div><div id="oSavings">$0.00</div>
+    <div>Difference</div><div id="oDiff">$0.00</div>
+    <div>Balance Forward</div><div id="oForward">$0.00</div>
+  </div>
+</section>
 
 </div>
 
 <script>
-/* ========= Month / Year Setup ========= */
-const monthSel = document.getElementById("month");
-const yearSel  = document.getElementById("year");
-const now = new Date();
+/* ================= SETUP ================= */
+const monthSel=month, yearSel=year;
+const now=new Date();
+for(let i=0;i<12;i++) monthSel.innerHTML+=`<option value="${i}">${new Date(0,i).toLocaleString('default',{month:'long'})}</option>`;
+for(let y=2024;y<2036;y++) yearSel.innerHTML+=`<option value="${y}">${y}</option>`;
+monthSel.value=now.getMonth(); yearSel.value=now.getFullYear();
 
-for (let i=0;i<12;i++){
-  monthSel.innerHTML += `<option value="${i}">${new Date(0,i).toLocaleString('default',{month:'long'})}</option>`;
-}
-for (let y=2024;y<2036;y++){
-  yearSel.innerHTML += `<option value="${y}">${y}</option>`;
-}
-monthSel.value = String(now.getMonth());
-yearSel.value  = String(now.getFullYear());
+let locked=false;
 
-/* ========= State ========= */
-let locked = false;
+/* ================= HELPERS ================= */
+const num=v=>Number(v)||0;
+const money=v=>`$${num(v).toFixed(2)}`;
+function key(){return `planner-${yearSel.value}-${String(monthSel.value).padStart(2,"0")}`}
 
-/* ========= Keying ========= */
-function monthName(idx){ return new Date(0, Number(idx)).toLocaleString('default',{month:'long'}); }
-function keyFor(mIdx=monthSel.value, y=yearSel.value){ return `planner-${y}-${String(mIdx).padStart(2,"0")}`; }
-
-/* ========= Helpers ========= */
-function money(n){ return `$${(Number(n)||0).toFixed(2)}`; }
-function num(v){ return Number(v)||0; }
-
-function clearBodies(){
-  incomeTable.tBodies[0].innerHTML="";
-  savingsTable.tBodies[0].innerHTML="";
-  billsTable.tBodies[0].innerHTML="";
-  debtTable.tBodies[0].innerHTML="";
-}
-
-function addRemoveCell(tr){
+/* ================= ROW ADDERS ================= */
+function addRemove(tr){
   const td=document.createElement("td");
-  td.innerHTML = `<span class="remove">×</span>`;
-  td.querySelector(".remove").onclick = ()=>{ tr.remove(); updateAll(true); };
+  td.innerHTML=`<span class="remove">×</span>`;
+  td.onclick=()=>{tr.remove();updateAll(true)};
   tr.appendChild(td);
 }
 
-/* ========= Row Adders ========= */
-function addIncome(row){
+function addIncome(){
   const tr=document.createElement("tr");
-  tr.innerHTML=`
-    <td><input type="date"></td>
-    <td><input type="text"></td>
-    <td><input type="number" value="0"></td>`;
-  addRemoveCell(tr);
+  tr.innerHTML=`<td><input type="date"></td><td><input></td><td><input type="number" value="0"></td>`;
+  addRemove(tr);
   tr.querySelectorAll("input").forEach(i=>i.oninput=()=>updateAll(true));
   incomeTable.tBodies[0].appendChild(tr);
-  if(row){
-    tr.children[0].querySelector("input").value=row.date||"";
-    tr.children[1].querySelector("input").value=row.source||"";
-    tr.children[2].querySelector("input").value=row.amount||0;
-  }
 }
 
-function addSavings(row){
+function addSavings(){
   const tr=document.createElement("tr");
-  tr.innerHTML=`
-    <td><input type="text"></td>
-    <td><input type="number" value="0"></td>`;
-  addRemoveCell(tr);
+  tr.innerHTML=`<td><input></td><td><input type="number" value="0"></td>`;
+  addRemove(tr);
   tr.querySelectorAll("input").forEach(i=>i.oninput=()=>updateAll(true));
   savingsTable.tBodies[0].appendChild(tr);
-  if(row){
-    tr.children[0].querySelector("input").value=row.purpose||"";
-    tr.children[1].querySelector("input").value=row.amount||0;
-  }
 }
 
-function addBill(row){
+function addDebt(){
   const tr=document.createElement("tr");
   tr.innerHTML=`
-    <td><input type="checkbox" class="paid"></td>
-    <td><input type="text"></td>
-    <td><input type="date" class="due"></td>
-    <td><input type="number" class="amount" value="0"></td>
-    <td class="unpaid">$0.00</td>`;
-  addRemoveCell(tr);
-  tr.querySelectorAll("input").forEach(i=>i.oninput=()=>updateAll(true));
-  billsTable.tBodies[0].appendChild(tr);
-  if(row){
-    tr.querySelector(".paid").checked=!!row.paid;
-    tr.children[1].querySelector("input").value=row.name||"";
-    tr.querySelector(".due").value=row.due||"";
-    tr.querySelector(".amount").value=row.amount||0;
-  }
-}
-
-function addDebt(row){
-  const tr=document.createElement("tr");
-  tr.innerHTML=`
-    <td>
-      <input type="text" class="dname" placeholder="Auto Loan"><br>
-      <span class="debt-meta daily"></span><br>
-      <span class="time-killed"></span>
-    </td>
+    <td><input class="dname"></td>
     <td><input type="number" class="balance" value="0"></td>
     <td><input type="number" class="apr" value="0"></td>
     <td><input type="number" class="payment" value="0"></td>
     <td><input type="number" class="extra" value="0"></td>
-    <td class="mint">$0.00</td>
-    <td class="ppaid">$0.00</td>
+    <td class="interest">$0.00</td>
+    <td class="principal">$0.00</td>
     <td class="newbal">$0.00</td>`;
-  addRemoveCell(tr);
+  addRemove(tr);
   tr.querySelectorAll("input").forEach(i=>i.oninput=()=>updateAll(true));
   debtTable.tBodies[0].appendChild(tr);
-  if(row){
-    tr.querySelector(".dname").value=row.name||"";
-    tr.querySelector(".balance").value=row.balance||0;
-    tr.querySelector(".apr").value=row.apr||0;
-    tr.querySelector(".payment").value=row.payment||0;
-    tr.querySelector(".extra").value=row.extra||0;
-  }
 }
 
-/* ========= Serialization ========= */
-function readIncome(){
-  return [...incomeTable.tBodies[0].rows].map(r=>({
-    date:r.children[0].querySelector("input").value,
-    source:r.children[1].querySelector("input").value,
-    amount:r.children[2].querySelector("input").value
-  }));
-}
-function readSavings(){
-  return [...savingsTable.tBodies[0].rows].map(r=>({
-    purpose:r.children[0].querySelector("input").value,
-    amount:r.children[1].querySelector("input").value
-  }));
-}
-function readBills(){
-  return [...billsTable.tBodies[0].rows].map(r=>({
-    paid:r.querySelector(".paid").checked,
-    name:r.children[1].querySelector("input").value,
-    due:r.querySelector(".due").value,
-    amount:r.querySelector(".amount").value
-  }));
-}
-function readDebt(){
-  return [...debtTable.tBodies[0].rows].map(r=>({
-    name:r.querySelector(".dname").value,
-    balance:r.querySelector(".balance").value,
-    apr:r.querySelector(".apr").value,
-    payment:r.querySelector(".payment").value,
-    extra:r.querySelector(".extra").value
-  }));
+function addBill(){
+  const tr=document.createElement("tr");
+  tr.innerHTML=`
+    <td><input type="checkbox" class="paid"></td>
+    <td><input></td>
+    <td><input type="date" class="due"></td>
+    <td><input type="number" class="amount" value="0"></td>
+    <td><select class="link"><option value="">—</option></select></td>
+    <td>
+      <select class="ptype">
+        <option value="regular">Regular</option>
+        <option value="principal">Extra Principal</option>
+      </select>
+    </td>
+    <td class="remaining">$0.00</td>`;
+  addRemove(tr);
+  tr.querySelectorAll("input,select").forEach(i=>i.oninput=()=>updateAll(true));
+  billsTable.tBodies[0].appendChild(tr);
 }
 
-/* ========= Save / Load ========= */
-function save(stateExtras={}){
-  const payload = {
-    locked,
-    startingBalance: startingBalance.value,
-    income: readIncome(),
-    savings: readSavings(),
-    bills: readBills(),
-    debt: readDebt(),
-    summary: getSummaryStored() || null,
-    ...stateExtras
-  };
-  localStorage.setItem(keyFor(), JSON.stringify(payload));
-}
-
-function load(){
-  const raw = localStorage.getItem(keyFor());
-  clearBodies();
-
-  if(!raw){
-    locked=false;
-    startingBalance.value = 0;
-    carryForward();
-    applyLockUI();
-    updateAll(false);
-    return;
-  }
-
-  const data = JSON.parse(raw);
-  locked = !!data.locked;
-  startingBalance.value = data.startingBalance ?? 0;
-
-  (data.income||[]).forEach(addIncome);
-  (data.savings||[]).forEach(addSavings);
-  (data.bills||[]).forEach(addBill);
-  (data.debt||[]).forEach(addDebt);
-
-  setSummaryStored(data.summary || null);
-  applyLockUI();
-  updateAll(false);
-}
-
-/* ========= Carry Forward ========= */
-function prevKey(){
-  const m = Number(monthSel.value);
-  const y = Number(yearSel.value);
-  const pm = (m===0)?11:(m-1);
-  const py = (m===0)?(y-1):y;
-  return keyFor(String(pm), String(py));
-}
-
-function carryForward(){
-  const rawPrev = localStorage.getItem(prevKey());
-  if(!rawPrev) return;
-
-  const prev = JSON.parse(rawPrev);
-
-  // Start with last month’s balance forward if available, else keep starting balance as-is
-  if(typeof prev.balanceForward === "number"){
-    startingBalance.value = prev.balanceForward.toFixed(2);
-  }
-
-  // Bills carry forward but reset paid = false
-  (prev.bills||[]).forEach(b=>addBill({...b, paid:false}));
-
-  // Savings allocations carry forward (optional behavior — currently YES)
-  (prev.savings||[]).forEach(addSavings);
-
-  // Debts carry forward with UPDATED balances:
-  // Use prev.debtComputedBalances if present; else use stored balance field.
-  const computed = prev.debtComputedBalances || null;
-  (prev.debt||[]).forEach((d, idx)=>{
-    const newBal = computed && typeof computed[idx] === "number" ? computed[idx] : Number(d.balance||0);
-    addDebt({...d, balance:newBal, extra:0}); // extra resets each month unless you choose otherwise
+/* ================= CORE LOGIC ================= */
+function updateDebtLinks(){
+  const names=[...debtTable.tBodies[0].rows].map(r=>r.querySelector(".dname").value);
+  document.querySelectorAll(".link").forEach(sel=>{
+    const cur=sel.value;
+    sel.innerHTML=`<option value="">—</option>`+
+      names.map(n=>`<option ${n===cur?"selected":""}>${n}</option>`).join("");
   });
 }
 
-/* ========= Lock UI ========= */
-function applyLockUI(){
-  document.getElementById("appRoot").classList.toggle("locked", locked);
-  lockBtn.textContent = locked ? "🔒 Unlock" : "🔓 Lock Month";
-  lockNote.textContent = locked ? "This month is locked to preserve history (inputs are read-only)." : "";
+function updateAll(save){
+  updateDebtLinks();
+
+  let income=0,savings=0,billsRemaining=0,debtOut=0;
+  const today=new Date().toISOString().split("T")[0];
+
+  [...incomeTable.tBodies[0].rows].forEach(r=>income+=num(r.children[2].querySelector("input").value));
+  [...savingsTable.tBodies[0].rows].forEach(r=>savings+=num(r.children[1].querySelector("input").value));
+
+  const debtMap={};
+  [...debtTable.tBodies[0].rows].forEach(r=>{
+    const name=r.querySelector(".dname").value;
+    debtMap[name]=r;
+  });
+
+  [...billsTable.tBodies[0].rows].forEach(r=>{
+    const paid=r.querySelector(".paid").checked;
+    const amt=num(r.querySelector(".amount").value);
+    const due=r.querySelector(".due").value;
+    const link=r.querySelector(".link").value;
+    const type=r.querySelector(".ptype").value;
+
+    r.classList.toggle("paid-row",paid);
+    r.classList.toggle("overdue",!paid&&due&&due<today);
+    r.classList.toggle("due-today",!paid&&due===today);
+
+    if(!paid) billsRemaining+=amt;
+    r.querySelector(".remaining").textContent=paid?money(0):money(amt);
+
+    if(paid && link && debtMap[link]){
+      const d=debtMap[link];
+      if(type==="principal"){
+        d.querySelector(".extra").value =
+          num(d.querySelector(".extra").value)+amt;
+      }else{
+        d.querySelector(".payment").value =
+          num(d.querySelector(".payment").value)+amt;
+      }
+    }
+  });
+
+  [...debtTable.tBodies[0].rows].forEach(r=>{
+    const bal=num(r.querySelector(".balance").value);
+    const apr=num(r.querySelector(".apr").value);
+    const pay=num(r.querySelector(".payment").value);
+    const extra=num(r.querySelector(".extra").value);
+
+    const interest=bal*(apr/100/12);
+    const principal=Math.max(pay-interest,0)+extra;
+    const newBal=Math.max(bal-principal,0);
+
+    r.querySelector(".interest").textContent=money(interest);
+    r.querySelector(".principal").textContent=money(principal);
+    r.querySelector(".newbal").textContent=money(newBal);
+
+    debtOut+=pay+extra;
+  });
+
+  incomeTotal.textContent=income.toFixed(2);
+  savingsTotal.textContent=savings.toFixed(2);
+  billsRemaining.textContent=billsRemaining.toFixed(2);
+  debtOutflow.textContent=debtOut.toFixed(2);
+
+  const start=num(startingBalance.value);
+  const remaining=start+income-billsRemaining-debtOut-savings;
+  remainingAmount.textContent=money(remaining);
+  remainingMeter.className=`remaining ${remaining>=0?"positive":"negative"}`;
+
+  oStart.textContent=money(start);
+  oIncome.textContent=money(income);
+  oBills.textContent=money(billsRemaining);
+  oDebt.textContent=money(debtOut);
+  oSavings.textContent=money(savings);
+  oDiff.textContent=money(income-billsRemaining-debtOut);
+  oForward.textContent=money(remaining);
+
+  if(save){
+    localStorage.setItem(key(),JSON.stringify({}));
+  }
 }
 
-lockBtn.onclick = ()=>{
-  if(!locked){
-    // Locking: generate and store summary snapshot
-    const snap = computeSummarySnapshot();
-    setSummaryStored(snap);
-    locked = true;
-  }else{
-    locked = false;
-  }
-  applyLockUI();
-  updateAll(true);
+/* ================= LOCK ================= */
+lockBtn.onclick=()=>{
+  locked=!locked;
+  appRoot.classList.toggle("locked",locked);
+  lockBtn.textContent=locked?"🔒 Unlock":"🔓 Lock Month";
+  lockNote.textContent=locked?"This month is locked to preserve history.":"";
 };
 
-monthSel.onchange = yearSel.onchange = ()=>load();
-startingBalance.oninput = ()=>updateAll(true);
-
-/* ========= Bills Sorting ========= */
-function sortBills(){
-  const tbody = billsTable.tBodies[0];
-  const rows = [...tbody.rows];
-  rows.sort((a,b)=>{
-    const aPaid=a.querySelector(".paid").checked;
-    const bPaid=b.querySelector(".paid").checked;
-    if(aPaid!==bPaid) return aPaid-bPaid; // unpaid first
-    const ad=a.querySelector(".due").value || "9999-12-31";
-    const bd=b.querySelector(".due").value || "9999-12-31";
-    return ad.localeCompare(bd);
-  });
-  rows.forEach(r=>tbody.appendChild(r));
-}
-
-/* ========= Summary Storage/UI ========= */
-function setSummaryStored(obj){
-  window.__summary = obj;
-  renderSummary();
-}
-function getSummaryStored(){
-  return window.__summary || null;
-}
-function renderSummary(){
-  const grid = document.getElementById("summaryGrid");
-  const s = getSummaryStored();
-  if(!s){
-    grid.innerHTML = `<div class="muted">Lock the month to generate a snapshot summary.</div><div></div>`;
-    return;
-  }
-  grid.innerHTML = `
-    <div>Month</div><div>${s.monthLabel}</div>
-    <div>Total Income</div><div>${money(s.income)}</div>
-    <div>Total Bills Paid</div><div>${money(s.billsPaid)}</div>
-    <div>Total Bills Unpaid</div><div>${money(s.billsUnpaid)}</div>
-    <div>Total Debt Outflow</div><div>${money(s.debtOutflow)}</div>
-    <div>Debt Interest This Month</div><div>${money(s.debtInterest)}</div>
-    <div>Debt Principal This Month</div><div>${money(s.debtPrincipal)}</div>
-    <div>Total Savings</div><div>${money(s.savings)}</div>
-    <div>Balance Forward</div><div>${money(s.balanceForward)}</div>
-  `;
-}
-
-/* ========= Core Calculations ========= */
-function computeEverything(){
-  const income = [...incomeTable.tBodies[0].rows].reduce((t,r)=>t+num(r.children[2].querySelector("input").value),0);
-  const savings = [...savingsTable.tBodies[0].rows].reduce((t,r)=>t+num(r.children[1].querySelector("input").value),0);
-
-  const today = new Date().toISOString().split("T")[0];
-  let billsPlanned = 0;
-  let billsUnpaid = 0;
-  let billsPaid = 0;
-
-  // Bills (planned always counts in cash flow; paid status is for tracking)
-  [...billsTable.tBodies[0].rows].forEach(r=>{
-    const paid = r.querySelector(".paid").checked;
-    const amt  = num(r.querySelector(".amount").value);
-    const due  = r.querySelector(".due").value;
-
-    billsPlanned += amt;
-    if(paid) billsPaid += amt;
-    else billsUnpaid += amt;
-
-    r.classList.toggle("paid-row", paid);
-    r.classList.toggle("overdue", !paid && due && due < today);
-    r.classList.toggle("due-today", !paid && due === today);
-    r.querySelector(".unpaid").textContent = paid ? money(0) : money(amt);
-  });
-
-  // Debt
-  let debtOutflow = 0;
-  let debtInterest = 0;
-  let debtPrincipal = 0;
-  const debtComputedBalances = [];
-
-  [...debtTable.tBodies[0].rows].forEach((r, idx)=>{
-    const bal = num(r.querySelector(".balance").value);
-    const apr = num(r.querySelector(".apr").value);
-    const pay = num(r.querySelector(".payment").value);
-    const extra = num(r.querySelector(".extra").value);
-
-    const dailyRate = (apr/100)/365;
-    const dailyInterest = bal * dailyRate;
-    const monthlyInterest = bal * ((apr/100)/12);
-
-    // Principal from regular payment + extra principal
-    const principalFromPay = Math.max(pay - monthlyInterest, 0);
-    const principalTotal = principalFromPay + extra;
-
-    const newBal = Math.max(bal - principalTotal, 0);
-
-    r.querySelector(".mint").textContent  = money(monthlyInterest);
-    r.querySelector(".ppaid").textContent = money(principalTotal);
-    r.querySelector(".newbal").textContent= money(newBal);
-
-    const dailyEl = r.querySelector(".daily");
-    const timeEl  = r.querySelector(".time-killed");
-    dailyEl.textContent = `Costs ${money(dailyInterest)}/day`;
-
-    if(extra > 0 && dailyInterest > 0){
-      timeEl.textContent = `Extra deletes ~${Math.floor(extra / dailyInterest)} days of interest`;
-    }else{
-      timeEl.textContent = "";
-    }
-
-    debtOutflow += (pay + extra);
-    debtInterest += monthlyInterest;
-    debtPrincipal += principalTotal;
-    debtComputedBalances[idx] = newBal;
-  });
-
-  const start = num(startingBalance.value);
-
-  // Remaining This Month = Start + Income - (Bills Planned) - (Debt Outflow) - (Savings)
-  const remaining = start + income - billsPlanned - debtOutflow - savings;
-
-  // Balance Forward uses same full cashflow model
-  const balanceForward = remaining;
-
-  return {
-    income, savings,
-    billsPlanned, billsUnpaid, billsPaid,
-    debtOutflow, debtInterest, debtPrincipal,
-    remaining, balanceForward,
-    debtComputedBalances
-  };
-}
-
-function updateAll(shouldSave){
-  sortBills();
-  const x = computeEverything();
-
-  incomeTotal.textContent = x.income.toFixed(2);
-  savingsTotal.textContent = x.savings.toFixed(2);
-  billsRemainingTotal.textContent = x.billsUnpaid.toFixed(2);
-  billsPlannedTotal.textContent = x.billsPlanned.toFixed(2);
-  debtOutflowTotal.textContent = x.debtOutflow.toFixed(2);
-
-  remainingAmount.textContent = money(x.remaining);
-  remainingMeter.className = `remaining ${x.remaining>=0 ? "positive" : "negative"}`;
-
-  oStart.textContent = money(num(startingBalance.value));
-  oIncome.textContent = money(x.income);
-  oBills.textContent = money(x.billsPlanned);
-  oDebt.textContent = money(x.debtOutflow);
-  oSavings.textContent = money(x.savings);
-  oDiff.textContent = money(x.income - x.billsPlanned - x.debtOutflow);
-  oDiff.className = (x.income - x.billsPlanned - x.debtOutflow)>=0 ? "positive" : "negative";
-  oForward.textContent = money(x.balanceForward);
-
-  // Save computed fields for carry-forward to use later
-  if(shouldSave){
-    save({
-      balanceForward: x.balanceForward,
-      debtComputedBalances: x.debtComputedBalances
-    });
-  }else{
-    // also keep fresh snapshot computed so carry-forward works after edits
-    save({
-      balanceForward: x.balanceForward,
-      debtComputedBalances: x.debtComputedBalances
-    });
-  }
-}
-
-/* ========= Summary Snapshot ========= */
-function computeSummarySnapshot(){
-  const x = computeEverything();
-  return {
-    monthLabel: `${monthName(monthSel.value)} ${yearSel.value}`,
-    income: x.income,
-    billsPaid: x.billsPaid,
-    billsUnpaid: x.billsUnpaid,
-    debtOutflow: x.debtOutflow,
-    debtInterest: x.debtInterest,
-    debtPrincipal: x.debtPrincipal,
-    savings: x.savings,
-    balanceForward: x.balanceForward,
-    generatedAtISO: new Date().toISOString()
-  };
-}
-
-/* ========= Print / Save PDF ========= */
-printBtn.onclick = ()=>openPrintView();
-
-function esc(s){
-  return String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
-}
-function openPrintView(){
-  const x = computeEverything();
-  const label = `${monthName(monthSel.value)} ${yearSel.value}`;
-
-  const incomeRows = readIncome().map(r=>`
-    <tr><td>${esc(r.date)}</td><td>${esc(r.source)}</td><td style="text-align:right;">${money(r.amount)}</td></tr>
-  `).join("");
-
-  const savingsRows = readSavings().map(r=>`
-    <tr><td>${esc(r.purpose)}</td><td style="text-align:right;">${money(r.amount)}</td></tr>
-  `).join("");
-
-  const billsRows = readBills().map(r=>`
-    <tr>
-      <td>${r.paid ? "✓" : ""}</td>
-      <td>${esc(r.name)}</td>
-      <td>${esc(r.due)}</td>
-      <td style="text-align:right;">${money(r.amount)}</td>
-      <td style="text-align:right;">${r.paid ? money(0) : money(r.amount)}</td>
-    </tr>
-  `).join("");
-
-  const debtRows = readDebt().map(d=>{
-    const bal=num(d.balance), apr=num(d.apr), pay=num(d.payment), extra=num(d.extra);
-    const monthlyInterest = bal*((apr/100)/12);
-    const principal = Math.max(pay-monthlyInterest,0)+extra;
-    const newBal = Math.max(bal-principal,0);
-    const dailyInterest = bal*((apr/100)/365);
-    return `
-      <tr>
-        <td>
-          <div><strong>${esc(d.name)}</strong></div>
-          <div style="color:#666;font-size:12px;">Costs ${money(dailyInterest)}/day</div>
-          ${extra>0 && dailyInterest>0 ? `<div style="color:#0a7a0a;font-size:12px;">Extra deletes ~${Math.floor(extra/dailyInterest)} days</div>` : ``}
-        </td>
-        <td style="text-align:right;">${money(bal)}</td>
-        <td style="text-align:right;">${apr.toFixed(2)}</td>
-        <td style="text-align:right;">${money(pay)}</td>
-        <td style="text-align:right;">${money(extra)}</td>
-        <td style="text-align:right;">${money(monthlyInterest)}</td>
-        <td style="text-align:right;">${money(principal)}</td>
-        <td style="text-align:right;">${money(newBal)}</td>
-      </tr>
-    `;
-  }).join("");
-
-  const summary = getSummaryStored();
-
-  const html = `
-<!doctype html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>Print – ${esc(label)}</title>
-<style>
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:24px;color:#111;}
-  h1{margin:0 0 8px;}
-  .muted{color:#666;}
-  .grid{display:grid;grid-template-columns:1fr auto;gap:8px 16px;margin-top:12px;}
-  .card{border:1px solid #e8e8e8;border-radius:12px;padding:12px;margin:14px 0;}
-  table{width:100%;border-collapse:collapse;margin-top:8px;}
-  th,td{border-bottom:1px solid #eee;padding:6px;vertical-align:top;}
-  th{color:#555;text-align:left;font-size:12px;}
-  @media print{
-    .no-print{display:none;}
-  }
-</style>
-</head>
-<body>
-  <div class="no-print" style="margin-bottom:12px;">
-    <button onclick="window.print()">Print / Save PDF</button>
-  </div>
-
-  <h1>${esc(label)} – Paycheck Tracker Snapshot</h1>
-  <div class="muted">Opening Balance: ${money(num(startingBalance.value))}</div>
-
-  <div class="card">
-    <h3 style="margin:0 0 6px;">Overview</h3>
-    <div class="grid">
-      <div>Total Income</div><div>${money(x.income)}</div>
-      <div>Bills Planned</div><div>${money(x.billsPlanned)}</div>
-      <div>Debt Outflow</div><div>${money(x.debtOutflow)}</div>
-      <div>Savings</div><div>${money(x.savings)}</div>
-      <div><strong>Balance Forward</strong></div><div><strong>${money(x.balanceForward)}</strong></div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3 style="margin:0 0 6px;">Income</h3>
-    <table>
-      <thead><tr><th>Date</th><th>Source</th><th style="text-align:right;">Amount</th></tr></thead>
-      <tbody>${incomeRows || `<tr><td colspan="3" class="muted">—</td></tr>`}</tbody>
-    </table>
-  </div>
-
-  <div class="card">
-    <h3 style="margin:0 0 6px;">Savings</h3>
-    <table>
-      <thead><tr><th>Purpose</th><th style="text-align:right;">Amount</th></tr></thead>
-      <tbody>${savingsRows || `<tr><td colspan="2" class="muted">—</td></tr>`}</tbody>
-    </table>
-  </div>
-
-  <div class="card">
-    <h3 style="margin:0 0 6px;">Bills</h3>
-    <table>
-      <thead><tr><th>Paid</th><th>Bill</th><th>Due</th><th style="text-align:right;">Amount</th><th style="text-align:right;">Remaining</th></tr></thead>
-      <tbody>${billsRows || `<tr><td colspan="5" class="muted">—</td></tr>`}</tbody>
-    </table>
-    <div class="grid" style="margin-top:10px;">
-      <div>Bills Remaining</div><div>${money(x.billsUnpaid)}</div>
-      <div>Bills Planned</div><div>${money(x.billsPlanned)}</div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3 style="margin:0 0 6px;">Debt</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Debt</th><th style="text-align:right;">Balance</th><th style="text-align:right;">APR%</th>
-          <th style="text-align:right;">Payment</th><th style="text-align:right;">Extra</th>
-          <th style="text-align:right;">Interest</th><th style="text-align:right;">Principal</th><th style="text-align:right;">New Bal</th>
-        </tr>
-      </thead>
-      <tbody>${debtRows || `<tr><td colspan="8" class="muted">—</td></tr>`}</tbody>
-    </table>
-    <div class="grid" style="margin-top:10px;">
-      <div>Debt Interest This Month</div><div>${money(x.debtInterest)}</div>
-      <div>Debt Principal This Month</div><div>${money(x.debtPrincipal)}</div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3 style="margin:0 0 6px;">Monthly Summary (Saved on Lock)</h3>
-    ${
-      summary ? `
-        <div class="grid">
-          <div>Generated</div><div>${esc(summary.generatedAtISO)}</div>
-          <div>Total Income</div><div>${money(summary.income)}</div>
-          <div>Total Bills Paid</div><div>${money(summary.billsPaid)}</div>
-          <div>Total Bills Unpaid</div><div>${money(summary.billsUnpaid)}</div>
-          <div>Total Debt Outflow</div><div>${money(summary.debtOutflow)}</div>
-          <div>Debt Interest</div><div>${money(summary.debtInterest)}</div>
-          <div>Debt Principal</div><div>${money(summary.debtPrincipal)}</div>
-          <div>Total Savings</div><div>${money(summary.savings)}</div>
-          <div><strong>Balance Forward</strong></div><div><strong>${money(summary.balanceForward)}</strong></div>
-        </div>
-      ` : `<div class="muted">No locked summary for this month yet.</div>`
-    }
-  </div>
-
-</body>
-</html>
-  `;
-
-  const w = window.open("", "_blank");
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
-}
-
-/* ========= Init ========= */
-document.getElementById("startingBalance").addEventListener("input", ()=>updateAll(true));
-load();
-updateAll(false);
+startingBalance.oninput=()=>updateAll(true);
+monthSel.onchange=yearSel.onchange=()=>location.reload();
 </script>
 </body>
 </html>
