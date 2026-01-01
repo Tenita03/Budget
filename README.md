@@ -1,3 +1,66 @@
+body {
+  background: #f4f5f7;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.planner {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+}
+
+.soft-card {
+  background: #f8faf9;
+}
+
+.heavy-card {
+  border-left: 6px solid #444;
+}
+
+.overview-card {
+  background: #fefefe;
+  border: 2px solid #ddd;
+}
+
+h2 {
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+td, th {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.total {
+  margin-top: 8px;
+  font-weight: bold;
+  text-align: right;
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 16px;
+}
+
+.overview-grid div:nth-child(odd) {
+  color: #666;
+}
+
 <div class="planner">
 
   <!-- Header -->
