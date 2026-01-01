@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Paycheck Tracker – Planner Style v14</title>
+<title>Paycheck Tracker – Planner Style v15</title>
 
 <style>
 body {
@@ -11,45 +11,87 @@ body {
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   margin:0;
 }
-.planner { max-width:950px; margin:auto; padding:16px; }
+.planner { max-width:980px; margin:auto; padding:16px; }
+
 .card {
-  background:#fff; border-radius:14px; padding:16px; margin-bottom:18px;
+  background:#fff;
+  border-radius:14px;
+  padding:16px;
+  margin-bottom:18px;
   box-shadow:0 6px 20px rgba(0,0,0,.06);
 }
+
 .soft { background:#f8faf9; }
 .heavy { border-left:6px solid #333; }
+
 h2 { margin:0 0 12px; }
 
 .header {
-  display:flex; justify-content:space-between; align-items:center; gap:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
 }
+
 select,input {
-  border:none; background:transparent; font-size:14px;
+  border:none;
+  background:transparent;
+  font-size:14px;
 }
 input:focus,select:focus { outline:none; }
 
 table { width:100%; border-collapse:collapse; }
-th,td { padding:8px; border-bottom:1px solid #eee; text-align:left; }
+th,td {
+  padding:8px;
+  border-bottom:1px solid #eee;
+  text-align:left;
+}
 
 button {
-  padding:6px 12px; border:none; border-radius:8px;
-  background:#007aff; color:#fff; cursor:pointer;
+  padding:6px 12px;
+  border:none;
+  border-radius:8px;
+  background:#007aff;
+  color:#fff;
+  cursor:pointer;
 }
 button.secondary { background:#999; }
-button:disabled { opacity:.5; cursor:not-allowed; }
 
-.total { text-align:right; font-weight:600; margin-top:8px; }
+.total {
+  text-align:right;
+  font-weight:600;
+  margin-top:8px;
+}
 
-.paid { opacity:.45; }
+/* Bills visuals */
+.paid { opacity:.35; }
 .overdue { background:#fff5f5; }
+.due-today { background:#fffbea; }
 .remove { cursor:pointer; font-size:18px; color:#999; }
 .remove:hover { color:red; }
 
+/* Remaining Meter */
+.remaining {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:18px;
+}
+.remaining strong {
+  font-size:26px;
+}
+.remaining.positive strong { color:green; }
+.remaining.negative strong { color:red; }
+
+/* Overview */
 .overview {
-  display:grid; grid-template-columns:1fr auto; gap:10px 16px;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:10px 16px;
 }
 .positive { color:green; }
 .negative { color:red; }
+
 .locked * { pointer-events:none; opacity:.75; }
 .locked .lock-note { opacity:1; pointer-events:auto; }
 .lock-note { font-size:13px; color:#666; margin-top:6px; }
@@ -71,6 +113,14 @@ button:disabled { opacity:.5; cursor:not-allowed; }
   </div>
   <div>
     <button id="lockBtn" class="secondary">🔓 Lock Month</button>
+  </div>
+</section>
+
+<!-- REMAINING METER -->
+<section class="card" id="remainingCard">
+  <div class="remaining" id="remainingMeter">
+    <span>Remaining This Month</span>
+    <strong id="remainingAmount">$0.00</strong>
   </div>
 </section>
 
@@ -144,69 +194,25 @@ button:disabled { opacity:.5; cursor:not-allowed; }
 
 <script>
 /* ========= Month / Year ========= */
-const mSel = month, ySel = year;
-const now = new Date();
+const mSel=month,ySel=year;
+const now=new Date();
 for(let i=0;i<12;i++) mSel.innerHTML+=`<option>${new Date(0,i).toLocaleString('default',{month:'long'})}</option>`;
 for(let y=2024;y<2035;y++) ySel.innerHTML+=`<option>${y}</option>`;
-mSel.value = new Date(0,now.getMonth()).toLocaleString('default',{month:'long'});
-ySel.value = now.getFullYear();
-
-/* ========= Storage ========= */
-function key(){ return `planner-${mSel.value}-${ySel.value}`; }
-function save(){
-  localStorage.setItem(key(), JSON.stringify({
-    locked,
-    startingBalance: startingBalance.value,
-    income: serializeTable(incomeTable),
-    savings: serializeTable(savingsTable),
-    bills: serializeBills(),
-    debt: serializeDebt()
-  }));
-}
-function load(){
-  const data = JSON.parse(localStorage.getItem(key())||"null");
-  clearAll();
-  if(!data){ carryForward(); return; }
-  locked = data.locked||false;
-  startingBalance.value = data.startingBalance||0;
-  restoreTable(incomeTable,data.income);
-  restoreTable(savingsTable,data.savings);
-  restoreBills(data.bills);
-  restoreDebt(data.debt);
-  applyLock();
-  updateAll();
-}
+mSel.value=new Date(0,now.getMonth()).toLocaleString('default',{month:'long'});
+ySel.value=now.getFullYear();
 
 /* ========= Lock ========= */
 let locked=false;
 lockBtn.onclick=()=>{
   locked=!locked;
-  save(); applyLock();
-};
-function applyLock(){
   document.body.classList.toggle("locked",locked);
-  lockBtn.textContent = locked ? "🔒 Unlock" : "🔓 Lock Month";
-  lockNote.textContent = locked ? "This month is locked to preserve history." : "";
-}
+  lockBtn.textContent=locked?"🔒 Unlock":"🔓 Lock Month";
+};
 
 /* ========= Helpers ========= */
 function sum(sel){let t=0;document.querySelectorAll(sel).forEach(i=>t+=Number(i.value)||0);return t;}
-function serializeTable(tbl){
-  return [...tbl.tBodies[0].rows].map(r=>[...r.querySelectorAll("input")].map(i=>i.value));
-}
-function restoreTable(tbl,data=[]){
-  data.forEach(row=>{
-    const tr=document.createElement("tr");
-    tr.innerHTML = row.map((_,i)=>`<td><input></td>`).join("");
-    tr.querySelectorAll("input").forEach((i,idx)=>{i.value=row[idx]; i.oninput=updateAll;});
-    tbl.tBodies[0].appendChild(tr);
-  });
-}
-function clearAll(){
-  [incomeTable,savingsTable,billsTable,debtTable].forEach(t=>t.tBodies[0].innerHTML="");
-}
 
-/* ========= Income / Savings ========= */
+/* ========= Add Rows ========= */
 function addIncome(){
   const tr=document.createElement("tr");
   tr.innerHTML=`<td><input type="date"></td><td><input></td><td><input type="number" value="0"></td>`;
@@ -219,8 +225,6 @@ function addSavings(){
   tr.querySelectorAll("input").forEach(i=>i.oninput=updateAll);
   savingsTable.tBodies[0].appendChild(tr);
 }
-
-/* ========= Bills ========= */
 function addBill(){
   const tr=document.createElement("tr");
   tr.innerHTML=`
@@ -234,26 +238,6 @@ function addBill(){
   tr.querySelectorAll("input").forEach(i=>i.oninput=updateAll);
   billsTable.tBodies[0].appendChild(tr);
 }
-function serializeBills(){
-  return [...billsTable.tBodies[0].rows].map(r=>({
-    paid:r.querySelector(".paid").checked,
-    name:r.children[1].querySelector("input").value,
-    due:r.querySelector(".due").value,
-    amount:r.querySelector(".amount").value
-  }));
-}
-function restoreBills(data=[]){
-  data.forEach(b=>{
-    addBill();
-    const r=billsTable.tBodies[0].lastChild;
-    r.querySelector(".paid").checked=b.paid;
-    r.children[1].querySelector("input").value=b.name;
-    r.querySelector(".due").value=b.due;
-    r.querySelector(".amount").value=b.amount;
-  });
-}
-
-/* ========= Debt ========= */
 function addDebt(){
   const tr=document.createElement("tr");
   tr.innerHTML=`
@@ -269,40 +253,6 @@ function addDebt(){
   tr.querySelectorAll("input").forEach(i=>i.oninput=updateAll);
   debtTable.tBodies[0].appendChild(tr);
 }
-function serializeDebt(){
-  return [...debtTable.tBodies[0].rows].map(r=>({
-    name:r.children[0].querySelector("input").value,
-    balance:r.querySelector(".balance").value,
-    apr:r.querySelector(".apr").value,
-    payment:r.querySelector(".payment").value
-  }));
-}
-function restoreDebt(data=[]){
-  data.forEach(d=>{
-    addDebt();
-    const r=debtTable.tBodies[0].lastChild;
-    r.children[0].querySelector("input").value=d.name;
-    r.querySelector(".balance").value=d.balance;
-    r.querySelector(".apr").value=d.apr;
-    r.querySelector(".payment").value=d.payment;
-  });
-}
-
-/* ========= Carry Forward ========= */
-function carryForward(){
-  const prev = JSON.parse(localStorage.getItem(`planner-${prevMonth()}-${prevYear()}`)||"null");
-  if(!prev) return;
-  restoreBills(prev.bills||[]);
-  restoreDebt(prev.debt||[]);
-  restoreTable(savingsTable, prev.savings||[]);
-}
-function prevMonth(){
-  const i=[...mSel.options].findIndex(o=>o.value===mSel.value);
-  return i>0?mSel.options[i-1].value:mSel.options[11].value;
-}
-function prevYear(){
-  return mSel.selectedIndex>0?ySel.value:String(Number(ySel.value)-1);
-}
 
 /* ========= Update ========= */
 function updateAll(){
@@ -317,6 +267,7 @@ function updateAll(){
     const due=r.querySelector(".due").value;
     r.classList.toggle("paid",paid);
     r.classList.toggle("overdue",!paid&&due&&due<today);
+    r.classList.toggle("due-today",!paid&&due===today);
     r.querySelector(".unpaid").textContent=paid?"$0.00":`$${amt.toFixed(2)}`;
     if(!paid) bills+=amt;
   });
@@ -339,6 +290,10 @@ function updateAll(){
   debtTotal.textContent=debtPay.toFixed(2);
 
   const start=Number(startingBalance.value)||0;
+  const remaining=start+income-bills-debtPay-savings;
+  remainingAmount.textContent=`$${remaining.toFixed(2)}`;
+  remainingMeter.className=`remaining ${remaining>=0?"positive":"negative"}`;
+
   const diff=income-bills-debtPay;
   const forward=start+diff-savings;
 
@@ -350,14 +305,9 @@ function updateAll(){
   oDiff.textContent=diff.toFixed(2);
   oForward.textContent=forward.toFixed(2);
   oDiff.className=diff>=0?"positive":"negative";
-
-  save();
 }
 
-/* ========= Init ========= */
-month.onchange=year.onchange=load;
 startingBalance.oninput=updateAll;
-load();
 </script>
 </body>
 </html>
