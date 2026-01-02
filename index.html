@@ -819,6 +819,37 @@ focusBtn.onclick=()=>{
   focusBtn.textContent=debtFocus?"🧭 Exit Focus":"🎯 Debt Focus";
 };
 
+function addMonthsToDate(year, monthIndex, monthsToAdd){
+  const d = new Date(year, monthIndex, 1);
+  d.setMonth(d.getMonth() + monthsToAdd);
+  return d;
+}
+
+function calcPayoff(balance, aprPct, monthlyPay){
+  const bal = num(balance);
+  const apr = num(aprPct);
+  const pay = num(monthlyPay);
+
+  if(bal <= 0) return { months: 0, totalInterest: 0, ok: true };
+
+  const r = (apr/100)/12;
+  if(pay <= 0) return { months: Infinity, totalInterest: Infinity, ok: false };
+
+  if(r === 0){
+    const m = Math.ceil(bal / pay);
+    return { months: m, totalInterest: (pay*m - bal), ok: true };
+  }
+
+  const monthlyInterestOnly = bal * r;
+  if(pay <= monthlyInterestOnly){
+    return { months: Infinity, totalInterest: Infinity, ok: false };
+  }
+
+  const monthsExact = -Math.log(1 - (r*bal)/pay) / Math.log(1 + r);
+  const m = Math.ceil(monthsExact);
+  return { months: m, totalInterest: pay*m - bal, ok: true };
+}
+
 /* -------------------------
    Row builders (FINAL – SINGLE SOURCE)
 ------------------------- */
@@ -906,45 +937,11 @@ function updateDebtLinks(){
   });
 }
 
+
+
 function updateAll(){
   let income=0,savings=0,bills=0,debtOut=0;
   updateDebtLinks();
-
-function renderPayoffInsights(debtRows){
-  if(!payoffInsights) return;
-
-  payoffInsights.innerHTML = "";
-
-  debtRows.forEach(info=>{
-    const name = info.name || "Untitled Debt";
-    const bal  = num(info.balance);
-    const apr  = num(info.apr);
-
-    const dailyInterest = bal * (apr/100) / 365;
-
-    const whatIfExtra = num(whatIfExtraByDebt[name] ?? 0);
-    const payForSim = Math.max(num(info.basePayment) + num(info.userExtra) + whatIfExtra, 0);
-
-    const payoff = calcPayoff(bal, apr, payForSim);
-
-    let payoffText = "—";
-    let finishText = "—";
-    let interestText = "—";
-
-    if(payoff.months === 0){
-      payoffText = "Paid off";
-      finishText = "Now";
-      interestText = money(0);
-    } else if(!payoff.ok){
-      payoffText = "Payment too low";
-      finishText = "N/A";
-      interestText = "N/A";
-    } else {
-      payoffText = `${payoff.months} mo`;
-      const finishDate = addMonthsToDate(Number(yearSel.value), Number(monthSel.value), payoff.months);
-      finishText = finishDate.toLocaleString("default",{month:"long", year:"numeric"});
-      interestText = money(payoff.totalInterest);
-    }
 
     const card = document.createElement("div");
     card.className = "payoffCard";
@@ -955,7 +952,61 @@ function renderPayoffInsights(debtRows){
         <div class="k">Balance</div><div class="v">${money(bal)}</div>
         <div class="k">APR</div><div class="v">${apr.toFixed(2)}%</div>
         <div class="k">Sim payment</div><div class="v">${money(payForSim)}/mo</div>
+        <div class="k">Payoff time</div><div class="v">${function renderPayoffInsights(debtRows){
+  if(!payoffInsights) return;
+
+  payoffInsights.innerHTML = "";
+
+  debtRows.forEach(info=>{
+    const name = info.name || "Untitled Debt";
+    const bal  = num(info.balance);
+    const apr  = num(info.apr);
+
+    const dailyInterest = bal * (apr/100) / 365;
+    const whatIfExtra = num(whatIfExtraByDebt[name] ?? 0);
+    const payForSim = Math.max(num(info.basePayment) + num(info.userExtra) + whatIfExtra, 0);
+
+    const payoff = calcPayoff(bal, apr, payForSim);
+
+    let payoffText = "—";
+    let finishText = "—";
+    let interestText = "—";
+
+    if(payoff.ok && payoff.months !== Infinity){
+      payoffText = `${payoff.months} mo`;
+      const finishDate = addMonthsToDate(Number(yearSel.value), Number(monthSel.value), payoff.months);
+      finishText = finishDate.toLocaleString("default",{month:"long", year:"numeric"});
+      interestText = money(payoff.totalInterest);
+    } else {
+      payoffText = "Payment too low";
+    }
+
+    const card = document.createElement("div");
+    card.className = "payoffCard";
+    card.innerHTML = `
+      <div class="payoffTitle">${name}</div>
+      <div class="payoffGrid">
+        <div class="k">Daily interest</div><div class="v">${money(dailyInterest)}/day</div>
+        <div class="k">Sim payment</div><div class="v">${money(payForSim)}/mo</div>
         <div class="k">Payoff time</div><div class="v">${payoffText}</div>
+        <div class="k">Finish</div><div class="v">${finishText}</div>
+        <div class="k">Total interest</div><div class="v">${interestText}</div>
+      </div>
+      <div class="payoffWhatIf">
+        <label>What-if extra</label>
+        <input type="number" value="${whatIfExtra}">
+      </div>
+    `;
+
+    card.querySelector("input").oninput = e=>{
+      whatIfExtraByDebt[name] = num(e.target.value);
+      saveAll();
+      updateAll();
+    };
+
+    payoffInsights.appendChild(card);
+  });
+} payoffText}</div>
         <div class="k">Finish</div><div class="v">${finishText}</div>
         <div class="k">Total interest (est.)</div><div class="v">${interestText}</div>
       </div>
@@ -971,6 +1022,16 @@ function renderPayoffInsights(debtRows){
       whatIfExtraByDebt[debtName] = num(e.target.value);
 
   // Build payoff insight data from the debt table
+  const debtRows = [...debtTable.querySelectorAll("tr")].map(r=>({
+    name: r.children[0].querySelector("input")?.value || "",
+    balance: r.children[1].querySelector("input")?.value || 0,
+    apr: r.children[2].querySelector("input")?.value || 0,
+    basePayment: r.children[3].querySelector("input")?.value || 0,
+    userExtra: r.children[4].querySelector("input")?.value || 0
+  }));
+
+  renderPayoffInsights(debtRows);
+
   const debtRows = [...debtTable.querySelectorAll("tr")].map(r=>({
     name: r.children[0].querySelector("input")?.value || "",
     balance: r.children[1].querySelector("input")?.value || 0,
@@ -1119,7 +1180,7 @@ function saveAll(){
 function loadAll(){
   const raw=localStorage.getItem(storageKey());
   if(!raw){
-      whatIfExtraByDebt = d.whatIfExtraByDebt || {}; addIncomeRow();addSavingsRow();addBillRow();addDebtRow();
+     
     return;
   }
   const d=JSON.parse(raw);
