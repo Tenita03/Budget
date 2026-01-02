@@ -491,6 +491,74 @@ tbody td{
     border-radius:14px;
   }
 
+/* ===== Payoff Insights ===== */
+.payoffWrap{
+  margin-top:12px;
+  display:grid;
+  gap:10px;
+}
+
+.payoffCard{
+  background:#ffffff;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  padding:12px;
+  box-shadow:0 6px 14px rgba(0,0,0,.04);
+}
+
+.payoffTitle{
+  font-weight:800;
+  margin-bottom:6px;
+}
+
+.payoffGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px 12px;
+  font-size:13px;
+  color:#0f172a;
+}
+
+.payoffGrid .k{ color:#64748b; font-weight:600; }
+.payoffGrid .v{ font-weight:800; text-align:right; }
+
+.payoffWhatIf{
+  margin-top:10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.payoffWhatIf label{
+  font-size:12px;
+  color:#64748b;
+  font-weight:700;
+}
+
+.payoffWhatIf input{
+  max-width:160px;
+  text-align:right;
+}
+
+/* iPhone portrait: keep payoff cards super readable */
+@media (max-width: 430px) and (orientation: portrait){
+  .payoffGrid{
+    grid-template-columns:1fr;
+  }
+  .payoffGrid .v{
+    text-align:left;
+  }
+  .payoffWhatIf{
+    flex-direction:column;
+    align-items:stretch;
+  }
+  .payoffWhatIf input{
+    max-width:100%;
+  }
+}
+
+
   /* Hide column separators (not needed on mobile) */
   thead th + th,
   tbody td + td{
@@ -613,6 +681,9 @@ tbody td{
         <tbody id="debtTable"></tbody>
       </table>
       <button class="btn" id="addDebtBtn">+ Add Debt</button>
+
+<div id="payoffInsights" class="payoffWrap"></div>
+
     </div>
   </section>
 
@@ -672,8 +743,11 @@ const oDebt    = $("oDebt");
 const oSavings = $("oSavings");
 const oForward = $("oForward");
 
+const payoffInsights = document.getElementById("payoffInsights");
+
 let locked = false;
 let debtFocus = false;
+let whatIfExtraByDebt = {}; // { debtName: number }
 
 /* -------------------------
    Helpers
@@ -836,7 +910,87 @@ function updateAll(){
   let income=0,savings=0,bills=0,debtOut=0;
   updateDebtLinks();
 
-  incomeTable.querySelectorAll("tr").forEach(r=>income+=num(r.children[2].querySelector("input").value));
+function renderPayoffInsights(debtRows){
+  if(!payoffInsights) return;
+
+  payoffInsights.innerHTML = "";
+
+  debtRows.forEach(info=>{
+    const name = info.name || "Untitled Debt";
+    const bal  = num(info.balance);
+    const apr  = num(info.apr);
+
+    const dailyInterest = bal * (apr/100) / 365;
+
+    const whatIfExtra = num(whatIfExtraByDebt[name] ?? 0);
+    const payForSim = Math.max(num(info.basePayment) + num(info.userExtra) + whatIfExtra, 0);
+
+    const payoff = calcPayoff(bal, apr, payForSim);
+
+    let payoffText = "—";
+    let finishText = "—";
+    let interestText = "—";
+
+    if(payoff.months === 0){
+      payoffText = "Paid off";
+      finishText = "Now";
+      interestText = money(0);
+    } else if(!payoff.ok){
+      payoffText = "Payment too low";
+      finishText = "N/A";
+      interestText = "N/A";
+    } else {
+      payoffText = `${payoff.months} mo`;
+      const finishDate = addMonthsToDate(Number(yearSel.value), Number(monthSel.value), payoff.months);
+      finishText = finishDate.toLocaleString("default",{month:"long", year:"numeric"});
+      interestText = money(payoff.totalInterest);
+    }
+
+    const card = document.createElement("div");
+    card.className = "payoffCard";
+    card.innerHTML = `
+      <div class="payoffTitle">${name}</div>
+      <div class="payoffGrid">
+        <div class="k">Daily interest</div><div class="v">${money(dailyInterest)}/day</div>
+        <div class="k">Balance</div><div class="v">${money(bal)}</div>
+        <div class="k">APR</div><div class="v">${apr.toFixed(2)}%</div>
+        <div class="k">Sim payment</div><div class="v">${money(payForSim)}/mo</div>
+        <div class="k">Payoff time</div><div class="v">${payoffText}</div>
+        <div class="k">Finish</div><div class="v">${finishText}</div>
+        <div class="k">Total interest (est.)</div><div class="v">${interestText}</div>
+      </div>
+      <div class="payoffWhatIf">
+        <label>What-if extra (doesn’t change your real “Extra”)</label>
+        <input type="number" inputmode="decimal" value="${whatIfExtra}" data-debt="${name}">
+      </div>
+    `;
+
+    const input = card.querySelector('input[data-debt]');
+    input.oninput = (e)=>{
+      const debtName = e.target.getAttribute("data-debt");
+      whatIfExtraByDebt[debtName] = num(e.target.value);
+
+  // Build payoff insight data from the debt table
+  const debtRows = [...debtTable.querySelectorAll("tr")].map(r=>({
+    name: r.children[0].querySelector("input")?.value || "",
+    balance: r.children[1].querySelector("input")?.value || 0,
+    apr: r.children[2].querySelector("input")?.value || 0,
+    basePayment: r.children[3].querySelector("input")?.value || 0,
+    userExtra: r.children[4].querySelector("input")?.value || 0
+  }));
+
+  renderPayoffInsights(debtRows);
+
+      saveAll(    whatIfExtraByDebt,);
+      updateAll(); // refresh insights live
+    };
+
+    payoffInsights.appendChild(card);
+  });
+}
+
+  
+incomeTable.querySelectorAll("tr").forEach(r=>income+=num(r.children[2].querySelector("input").value));
   savingsTable.querySelectorAll("tr").forEach(r=>savings+=num(r.children[1].querySelector("input").value));
 
   const debtMap={};
@@ -893,6 +1047,40 @@ function updateAll(){
   saveAll();
 }
 
+function addMonthsToDate(year, monthIndex, monthsToAdd){
+  const d = new Date(year, monthIndex, 1);
+  d.setMonth(d.getMonth() + monthsToAdd);
+  return d;
+}
+
+function calcPayoff(balance, aprPct, monthlyPay){
+  const bal = num(balance);
+  const apr = num(aprPct);
+  const pay = num(monthlyPay);
+
+  if(bal <= 0) return { months: 0, totalInterest: 0, ok: true };
+
+  const r = (apr/100)/12;
+  if(pay <= 0) return { months: Infinity, totalInterest: Infinity, ok: false };
+
+  if(r === 0){
+    const m = Math.ceil(bal / pay);
+    return { months: m, totalInterest: (pay*m - bal), ok: true };
+  }
+
+  const monthlyInterestOnly = bal * r;
+  if(pay <= monthlyInterestOnly){
+    return { months: Infinity, totalInterest: Infinity, ok: false };
+  }
+
+  const monthsExact = -Math.log(1 - (r*bal)/pay) / Math.log(1 + r);
+  const m = Math.ceil(monthsExact);
+
+  // Rough total interest estimate
+  const totalInterest = pay*m - bal;
+  return { months: m, totalInterest, ok: true };
+}
+
 /* -------------------------
    Save / Load
 ------------------------- */
@@ -931,7 +1119,7 @@ function saveAll(){
 function loadAll(){
   const raw=localStorage.getItem(storageKey());
   if(!raw){
-    addIncomeRow();addSavingsRow();addBillRow();addDebtRow();
+      whatIfExtraByDebt = d.whatIfExtraByDebt || {}; addIncomeRow();addSavingsRow();addBillRow();addDebtRow();
     return;
   }
   const d=JSON.parse(raw);
