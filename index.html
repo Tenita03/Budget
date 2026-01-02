@@ -270,10 +270,15 @@ tbody td{
 
 .locked input,
 .locked select,
-.locked button,
-.locked .remove{
+.locked .remove,
+.locked .btn:not(#lockBtn){
   pointer-events:none;
   opacity:.6;
+}
+
+.locked #lockBtn{
+  background:#0f172a;
+  color:#fff;
 }
 
 @media (max-width: 480px){
