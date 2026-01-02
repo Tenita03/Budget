@@ -351,6 +351,148 @@ tbody td{
   }
 }
 
+/* =========================
+   iPhone 13 Pro Max
+   Portrait-only tuning
+========================= */
+@media (max-width: 430px) and (orientation: portrait){
+
+  /* Overall layout */
+  .wrap{
+    padding:12px;
+  }
+
+  .card{
+    padding:14px;
+    border-radius:18px;
+  }
+
+  /* Remaining KPI (top priority) */
+  .kpi{
+    align-items:flex-start;
+    gap:6px;
+  }
+
+  .kpi .label{
+    font-size:14px;
+  }
+
+  .kpi .value{
+    font-size:30px;
+    letter-spacing:-0.4px;
+  }
+
+  /* Section headers */
+  .section-head h2{
+    font-size:17px;
+  }
+
+  .chev{
+    padding:6px 10px;
+    border-radius:12px;
+  }
+
+  /* ===== TABLE → STACKED CARD TRANSFORM ===== */
+  table, thead, tbody, th, td, tr{
+    display:block;
+    width:100%;
+  }
+
+  thead{
+    display:none;
+  }
+
+  tbody tr{
+    background:#ffffff;
+    border:1px solid #e5e7eb;
+    border-radius:16px;
+    padding:10px 12px;
+    margin-bottom:14px;
+    box-shadow:0 6px 14px rgba(0,0,0,.04);
+  }
+
+  tbody td{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:6px 0;
+    border:none;
+  }
+
+  /* Label (left) */
+  tbody td::before{
+    content:attr(data-label);
+    font-size:12px;
+    font-weight:600;
+    color:#64748b;
+    flex:1;
+  }
+
+  /* Value / input (right) */
+  tbody td input,
+  tbody td select,
+  tbody td span{
+    flex:1;
+    max-width:58%;
+    text-align:right;
+  }
+
+  /* Paid / checkbox alignment */
+  tbody td input[type="checkbox"]{
+    max-width:none;
+    transform:scale(1.25);
+  }
+
+  /* Remove (X) button */
+  .remove{
+    font-size:22px;
+    padding-left:6px;
+  }
+
+  /* Bills visual states */
+  .bill-paid{
+    opacity:.45;
+  }
+
+  .bill-overdue{
+    background:#fff1f2;
+    border-color:#fecdd3;
+  }
+
+  .bill-today{
+    background:#fffbeb;
+    border-color:#fde68a;
+  }
+
+  /* Debt meta text spacing */
+  .debt-meta{
+    margin-top:4px;
+    font-size:12px;
+  }
+
+  .time-killed{
+    margin-top:2px;
+    font-size:12px;
+  }
+
+  /* Touch comfort */
+  input, select, button{
+    min-height:44px;
+    font-size:15px;
+  }
+
+  button{
+    border-radius:14px;
+  }
+
+  /* Hide column separators (not needed on mobile) */
+  thead th + th,
+  tbody td + td{
+    border-left:none;
+  }
+}
+
 </style>
 </head>
 
