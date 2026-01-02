@@ -756,11 +756,29 @@ function addRemove(td,row){
 function addIncomeRow(data={}){
   const tr=document.createElement("tr");
   tr.innerHTML=`
-    <td><input type="date" value="${data.date||""}"></td>
-    <td><input value="${data.source||""}"></td>
-    <td class="right"><input type="number" value="${data.amount||0}"></td>
-    <td class="cell-tight"></td>`;
-  addRemove(tr.lastElementChild,tr);
+    <td data-label="Date">
+      <input type="date" value="${data.date||""}">
+    </td>
+    <td data-label="Source">
+      <input value="${data.source||""}">
+    </td>
+    <td data-label="Amount" class="right">
+      <input type="number" value="${data.amount||0}">
+    </td>
+    <td class="cell-tight">
+      <span class="remove">×</span>
+    </td>`;
+  
+  tr.querySelector(".remove").onclick=()=>{
+    if(locked) return;
+    tr.remove();
+    updateAll();
+  };
+
+  tr.querySelectorAll("input").forEach(i=>i.oninput=updateAll);
+  incomeTable.appendChild(tr);
+}
+
   tr.querySelectorAll("input").forEach(i=>i.oninput=updateAll);
   incomeTable.appendChild(tr);
 }
@@ -768,10 +786,26 @@ function addIncomeRow(data={}){
 function addSavingsRow(data={}){
   const tr=document.createElement("tr");
   tr.innerHTML=`
-    <td><input value="${data.purpose||""}"></td>
-    <td class="right"><input type="number" value="${data.amount||0}"></td>
-    <td class="cell-tight"></td>`;
-  addRemove(tr.lastElementChild,tr);
+    <td data-label="Purpose">
+      <input value="${data.purpose||""}">
+    </td>
+    <td data-label="Amount" class="right">
+      <input type="number" value="${data.amount||0}">
+    </td>
+    <td class="cell-tight">
+      <span class="remove">×</span>
+    </td>`;
+  
+  tr.querySelector(".remove").onclick=()=>{
+    if(locked) return;
+    tr.remove();
+    updateAll();
+  };
+
+  tr.querySelectorAll("input").forEach(i=>i.oninput=updateAll);
+  savingsTable.appendChild(tr);
+}
+
   tr.querySelectorAll("input").forEach(i=>i.oninput=updateAll);
   savingsTable.appendChild(tr);
 }
@@ -779,16 +813,38 @@ function addSavingsRow(data={}){
 function addDebtRow(data={}){
   const tr=document.createElement("tr");
   tr.innerHTML=`
-    <td><input value="${data.name||""}"></td>
-    <td class="right"><input type="number" value="${data.balance||0}"></td>
-    <td class="right"><input type="number" value="${data.apr||0}"></td>
-    <td class="right"><input type="number" value="${data.payment||0}"></td>
-    <td class="right"><input type="number" value="${data.extra||0}"></td>
-    <td class="right">$0.00</td>
-    <td class="right">$0.00</td>
-    <td class="right">$0.00</td>
-    <td class="cell-tight"></td>`;
-  addRemove(tr.lastElementChild,tr);
+    <td data-label="Debt">
+      <input value="${data.name||""}">
+    </td>
+    <td data-label="Balance" class="right">
+      <input type="number" value="${data.balance||0}">
+    </td>
+    <td data-label="APR %" class="right">
+      <input type="number" value="${data.apr||0}">
+    </td>
+    <td data-label="Payment" class="right">
+      <input type="number" value="${data.payment||0}">
+    </td>
+    <td data-label="Extra" class="right">
+      <input type="number" value="${data.extra||0}">
+    </td>
+    <td data-label="Interest" class="right">$0.00</td>
+    <td data-label="Principal" class="right">$0.00</td>
+    <td data-label="New Balance" class="right">$0.00</td>
+    <td class="cell-tight">
+      <span class="remove">×</span>
+    </td>`;
+  
+  tr.querySelector(".remove").onclick=()=>{
+    if(locked) return;
+    tr.remove();
+    updateAll();
+  };
+
+  tr.querySelectorAll("input").forEach(i=>i.oninput=updateAll);
+  debtTable.appendChild(tr);
+}
+
   tr.querySelectorAll("input").forEach(i=>i.oninput=updateAll);
   debtTable.appendChild(tr);
 }
@@ -796,20 +852,43 @@ function addDebtRow(data={}){
 function addBillRow(data={}){
   const tr=document.createElement("tr");
   tr.innerHTML=`
-    <td><input type="checkbox" ${data.paid?"checked":""}></td>
-    <td><input value="${data.name||""}"></td>
-    <td><input type="date" value="${data.due||""}"></td>
-    <td class="right"><input type="number" value="${data.amount||0}"></td>
-    <td><select></select></td>
-    <td>
+    <td data-label="Paid">
+      <input type="checkbox" ${data.paid?"checked":""}>
+    </td>
+    <td data-label="Bill">
+      <input value="${data.name||""}">
+    </td>
+    <td data-label="Due">
+      <input type="date" value="${data.due||""}">
+    </td>
+    <td data-label="Amount" class="right">
+      <input type="number" value="${data.amount||0}">
+    </td>
+    <td data-label="Linked Debt">
+      <select></select>
+    </td>
+    <td data-label="Payment Type">
       <select>
         <option value="regular">Regular</option>
         <option value="principal">Extra Principal</option>
       </select>
     </td>
-    <td class="right">$0.00</td>
-    <td class="cell-tight"></td>`;
-  addRemove(tr.lastElementChild,tr);
+    <td data-label="Remaining" class="right">$0.00</td>
+    <td class="cell-tight">
+      <span class="remove">×</span>
+    </td>`;
+
+  tr.querySelector(".remove").onclick=()=>{
+    if(locked) return;
+    tr.remove();
+    updateAll();
+  };
+
+  tr.querySelectorAll("input,select").forEach(i=>i.oninput=updateAll);
+  billsTable.appendChild(tr);
+  updateDebtLinks();
+}
+
   tr.querySelectorAll("input,select").forEach(i=>i.oninput=updateAll);
   billsTable.appendChild(tr);
   updateDebtLinks();
