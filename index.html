@@ -276,7 +276,81 @@ tbody td{
   opacity:.6;
 }
 
+@media (max-width: 480px){
+  input, select, button{
+    min-height:44px;
+    font-size:15px;
+  }
+}
+
 .focus-hide{ display:none !important; }
+
+/* =========================
+   iPHONE OPTIMIZATION
+========================= */
+@media (max-width: 480px){
+
+  /* Kill horizontal scroll globally */
+  body{
+    overflow-x:hidden;
+  }
+
+  table, thead, tbody, th, td, tr{
+    display:block;
+    width:100%;
+  }
+
+  thead{
+    display:none;
+  }
+
+  tbody tr{
+    margin-bottom:12px;
+    padding:10px;
+    background:#f8fafc;
+    border-radius:12px;
+    border:1px solid #e5e7eb;
+  }
+
+  tbody td{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    padding:6px 0;
+    border:none;
+  }
+
+  tbody td::before{
+    content:attr(data-label);
+    font-size:12px;
+    color:#64748b;
+    font-weight:600;
+    flex:1;
+  }
+
+  tbody td input,
+  tbody td select{
+    flex:1;
+    max-width:55%;
+  }
+
+  .remove{
+    font-size:20px;
+    margin-left:8px;
+  }
+
+  /* KPI spacing */
+  .kpi .value{
+    font-size:28px;
+  }
+
+  /* Section spacing */
+  .section-body{
+    margin-top:8px;
+  }
+}
+
 </style>
 </head>
 
