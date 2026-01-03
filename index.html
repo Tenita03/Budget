@@ -172,7 +172,18 @@ th{
 <div class="card">
   <h2>Debt</h2>
   <table>
-    <thead><tr><th>Name</th><th>Payment</th><th></th></tr></thead>
+    <thead>
+  <tr>
+    <th>Debt</th>
+    <th>Balance</th>
+    <th>APR %</th>
+    <th>Payment</th>
+    <th>Interest</th>
+    <th>Principal</th>
+    <th>New Balance</th>
+    <th></th>
+  </tr>
+</thead>
     <tbody id="debt"></tbody>
   </table>
   <button id="addDebt">+ Add Debt</button>
@@ -237,7 +248,13 @@ $("addBill").onclick = ()=>!locked && addRow(billsT,
 );
 
 $("addDebt").onclick = ()=>!locked && addRow(debtT,
-  `<td><input></td><td><input type="number"></td>`
+  `<td><input></td>
+   <td><input type="number"></td>
+   <td><input type="number"></td>
+   <td><input type="number"></td>
+   <td>$0.00</td>
+   <td>$0.00</td>
+   <td>$0.00</td>`
 );
 
 /* Lock */
@@ -261,7 +278,7 @@ function update(){
   const start = Number(startBal.value)||0;
   const income = sum(incomeT);
   const bills = sumUnpaidBills();
-  const debt   = sum(debtT);
+  const debt = calculateDebt();
   const rem = start + income - bills - debt;
   remaining.textContent = money(rem);
   save();
@@ -276,6 +293,28 @@ function sumUnpaidBills(){
     r.style.opacity = paid ? 0.45 : 1;
   });
   return t;
+}
+
+function calculateDebt(){
+  let total = 0;
+
+  debtT.querySelectorAll("tr").forEach(r=>{
+    const bal = Number(r.children[1].querySelector("input").value)||0;
+    const apr = Number(r.children[2].querySelector("input").value)||0;
+    const pay = Number(r.children[3].querySelector("input").value)||0;
+
+    const interest = bal * (apr/100/12);
+    const principal = Math.max(pay - interest, 0);
+    const newBal = Math.max(bal - principal, 0);
+
+    r.children[4].textContent = money(interest);
+    r.children[5].textContent = money(principal);
+    r.children[6].textContent = money(newBal);
+
+    total += pay;
+  });
+
+  return total;
 }
 
 /* Save / Load */
