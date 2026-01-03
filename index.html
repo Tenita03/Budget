@@ -155,7 +155,14 @@ th{
 <div class="card">
   <h2>Bills</h2>
   <table>
-    <thead><tr><th>Name</th><th>Amount</th><th></th></tr></thead>
+   <thead>
+  <tr>
+    <th>✔</th>
+    <th>Name</th>
+    <th>Amount</th>
+    <th></th>
+  </tr>
+</thead>
     <tbody id="bills"></tbody>
   </table>
   <button id="addBill">+ Add Bill</button>
@@ -224,7 +231,9 @@ $("addIncome").onclick = ()=>!locked && addRow(incomeT,
 );
 
 $("addBill").onclick = ()=>!locked && addRow(billsT,
-  `<td><input></td><td><input type="number"></td>`
+  `<td><input type="checkbox"></td>
+   <td><input></td>
+   <td><input type="number"></td>`
 );
 
 $("addDebt").onclick = ()=>!locked && addRow(debtT,
@@ -251,11 +260,22 @@ function sum(table){
 function update(){
   const start = Number(startBal.value)||0;
   const income = sum(incomeT);
-  const bills  = sum(billsT);
+  const bills = sumUnpaidBills();
   const debt   = sum(debtT);
   const rem = start + income - bills - debt;
   remaining.textContent = money(rem);
   save();
+}
+
+function sumUnpaidBills(){
+  let t = 0;
+  billsT.querySelectorAll("tr").forEach(r=>{
+    const paid = r.children[0].querySelector("input").checked;
+    const amt  = Number(r.children[2].querySelector("input").value)||0;
+    if(!paid) t += amt;
+    r.style.opacity = paid ? 0.45 : 1;
+  });
+  return t;
 }
 
 /* Save / Load */
