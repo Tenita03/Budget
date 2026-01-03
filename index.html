@@ -107,9 +107,14 @@ th{
   font-weight:800;
 }
 
-.locked *:not(#lockBtn){
+.locked *{
   pointer-events:none;
   opacity:.6;
+}
+
+#lockBtn{
+  pointer-events:auto !important;
+  opacity:1 !important;
 }
 
 @media (max-width:480px){
@@ -277,8 +282,13 @@ $("addDebt").onclick = ()=>!locked && addRow(debtT,
 /* ---------- Lock ---------- */
 lockBtn.onclick = ()=>{
   locked = !locked;
-  app.classList.toggle("locked",locked);
-  lockBtn.textContent = locked ? "🔒 Unlock Month" : "🔓 Lock Month";
+
+  app.classList.toggle("locked", locked);
+
+  lockBtn.textContent = locked
+    ? "🔒 Unlock Month"
+    : "🔓 Lock Month";
+
   save();
 };
 
