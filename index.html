@@ -195,7 +195,7 @@ th{
 </div>
 
 <script>
-/* ========= STABLE CORE ========= */
+/* ========= STABLE CORE (CLEAN) ========= */
 
 const $ = id => document.getElementById(id);
 const money = n => `$${(Number(n)||0).toFixed(2)}`;
@@ -227,17 +227,23 @@ let locked = false;
   yearSel.value  = now.getFullYear();
 })();
 
-/* Rows */
+/* ---------- Rows ---------- */
 function addRow(table, cells){
   const tr = document.createElement("tr");
   tr.innerHTML = cells + `<td><span class="remove">×</span></td>`;
+
   tr.querySelector(".remove").onclick = () => {
     if(locked) return;
     tr.remove();
     update();
   };
-  tr.querySelectorAll("input").forEach(i=>i.oninput=update);
+
+  tr.querySelectorAll("input,select").forEach(i=>{
+    i.oninput = update;
+  });
+
   table.appendChild(tr);
+  update();
 }
 
 $("addIncome").onclick = ()=>!locked && addRow(incomeT,
@@ -268,7 +274,7 @@ $("addDebt").onclick = ()=>!locked && addRow(debtT,
    <td>$0.00</td>`
 );
 
-/* Lock */
+/* ---------- Lock ---------- */
 lockBtn.onclick = ()=>{
   locked = !locked;
   app.classList.toggle("locked",locked);
@@ -276,30 +282,34 @@ lockBtn.onclick = ()=>{
   save();
 };
 
-/* Calculate */
-function sum(table){
+/* ---------- Helpers ---------- */
+function updateDebtDropdowns(){
+  const names = [...debtT.querySelectorAll("tr")]
+    .map(r => r.children[0].querySelector("input").value)
+    .filter(Boolean);
+
+  billsT.querySelectorAll("tr").forEach(r=>{
+    const sel = r.children[3].querySelector("select");
+    const cur = sel.value;
+
+    sel.innerHTML =
+      `<option value="">—</option>` +
+      names.map(n=>`<option value="${n}">${n}</option>`).join("");
+
+    sel.value = cur;
+  });
+}
+
+function sumIncome(){
   let t=0;
-  table.querySelectorAll("tr").forEach(r=>{
+  incomeT.querySelectorAll("tr").forEach(r=>{
     t += Number(r.children[1].querySelector("input").value)||0;
   });
   return t;
 }
 
-
-
-function update(){
-updateDebtDropdowns();
-  const start = Number(startBal.value)||0;
-  const income = sum(incomeT);
-  const bills = sumUnpaidBills();
-  const debt = calculateDebt();
-  const rem = start + income - bills - debt;
-  remaining.textContent = money(rem);
-  save();
-}
-
 function sumUnpaidBills(){
-  let t = 0;
+  let t=0;
   billsT.querySelectorAll("tr").forEach(r=>{
     const paid = r.children[0].querySelector("input").checked;
     const amt  = Number(r.children[2].querySelector("input").value)||0;
@@ -309,27 +319,36 @@ function sumUnpaidBills(){
   return t;
 }
 
-const billToDebt = {};
-debtT.querySelectorAll("tr").forEach(r=>{
-  const name = r.children[0].querySelector("input").value;
-  billToDebt[name] = { pay: 0, extra: 0 };
-});
+/* ---------- CORE UPDATE ---------- */
+function update(){
+  updateDebtDropdowns();
 
-billsT.querySelectorAll("tr").forEach(r=>{
-  const paid = r.children[0].querySelector("input").checked;
-  const amt  = Number(r.children[2].querySelector("input").value)||0;
-  const debt = r.children[3].querySelector("select").value;
-  const type = r.children[4].querySelector("select").value;
+  const start   = Number(startBal.value)||0;
+  const income  = sumIncome();
+  const bills   = sumUnpaidBills();
 
-  if(paid && debt && billToDebt[debt]){
-    type === "principal"
-      ? billToDebt[debt].extra += amt
-      : billToDebt[debt].pay   += amt;
-  }
-});
+  /* Build bill → debt map */
+  const billToDebt = {};
+  debtT.querySelectorAll("tr").forEach(r=>{
+    const name = r.children[0].querySelector("input").value;
+    billToDebt[name] = { pay: 0, extra: 0 };
+  });
 
-function calculateDebt(billToDebt){
-  let total = 0;
+  billsT.querySelectorAll("tr").forEach(r=>{
+    const paid = r.children[0].querySelector("input").checked;
+    const amt  = Number(r.children[2].querySelector("input").value)||0;
+    const debt = r.children[3].querySelector("select").value;
+    const type = r.children[4].querySelector("select").value;
+
+    if(paid && debt && billToDebt[debt]){
+      type === "principal"
+        ? billToDebt[debt].extra += amt
+        : billToDebt[debt].pay   += amt;
+    }
+  });
+
+  /* Calculate debt */
+  let debtOut = 0;
 
   debtT.querySelectorAll("tr").forEach(r=>{
     const name  = r.children[0].querySelector("input").value;
@@ -353,15 +372,16 @@ function calculateDebt(billToDebt){
     r.children[6].textContent = money(principal);
     r.children[7].textContent = money(newBal);
 
-    total += pay + extra + linkedPay + linkedExtra;
+    debtOut += pay + extra + linkedPay + linkedExtra;
   });
 
-  return total;
+  const rem = start + income - bills - debtOut;
+  remaining.textContent = money(rem);
+
+  save();
 }
 
-  return total;
-}
-/* Save / Load */
+/* ---------- Save / Load ---------- */
 function key(){
   return `stable-${yearSel.value}-${monthSel.value}`;
 }
@@ -369,10 +389,7 @@ function key(){
 function save(){
   localStorage.setItem(key(), JSON.stringify({
     locked,
-    start: startBal.value,
-    income:[...incomeT.children].map(r=>r.children[1].querySelector("input").value),
-    bills:[...billsT.children].map(r=>r.children[1].querySelector("input").value),
-    debt:[...debtT.children].map(r=>r.children[1].querySelector("input").value)
+    start: startBal.value
   }));
 }
 
@@ -383,23 +400,6 @@ function load(){
   lockBtn.textContent = locked ? "🔒 Unlock Month" : "🔓 Lock Month";
   startBal.value = d.start||"";
   update();
-}
-
-function updateDebtDropdowns(){
-  const names = [...debtT.querySelectorAll("tr")]
-    .map(r => r.children[0].querySelector("input").value)
-    .filter(Boolean);
-
-  billsT.querySelectorAll("tr").forEach(r=>{
-    const sel = r.children[3].querySelector("select");
-    const cur = sel.value;
-
-    sel.innerHTML =
-      `<option value="">—</option>` +
-      names.map(n=>`<option value="${n}">${n}</option>`).join("");
-
-    sel.value = cur;
-  });
 }
 
 monthSel.onchange = yearSel.onchange = load;
