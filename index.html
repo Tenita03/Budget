@@ -178,6 +178,7 @@ th{
     <th>Balance</th>
     <th>APR %</th>
     <th>Payment</th>
+    <th>Extra</th>
     <th>Interest</th>
     <th>Principal</th>
     <th>New Balance</th>
@@ -252,6 +253,7 @@ $("addDebt").onclick = ()=>!locked && addRow(debtT,
    <td><input type="number"></td>
    <td><input type="number"></td>
    <td><input type="number"></td>
+   <td><input type="number"></td>
    <td>$0.00</td>
    <td>$0.00</td>
    <td>$0.00</td>`
@@ -299,24 +301,24 @@ function calculateDebt(){
   let total = 0;
 
   debtT.querySelectorAll("tr").forEach(r=>{
-    const bal = Number(r.children[1].querySelector("input").value)||0;
-    const apr = Number(r.children[2].querySelector("input").value)||0;
-    const pay = Number(r.children[3].querySelector("input").value)||0;
+    const bal   = Number(r.children[1].querySelector("input").value)||0;
+    const apr   = Number(r.children[2].querySelector("input").value)||0;
+    const pay   = Number(r.children[3].querySelector("input").value)||0;
+    const extra = Number(r.children[4].querySelector("input").value)||0;
 
     const interest = bal * (apr/100/12);
-    const principal = Math.max(pay - interest, 0);
+    const principal = Math.max(pay - interest, 0) + extra;
     const newBal = Math.max(bal - principal, 0);
 
-    r.children[4].textContent = money(interest);
-    r.children[5].textContent = money(principal);
-    r.children[6].textContent = money(newBal);
+    r.children[5].textContent = money(interest);
+    r.children[6].textContent = money(principal);
+    r.children[7].textContent = money(newBal);
 
-    total += pay;
+    total += pay + extra;
   });
 
   return total;
 }
-
 /* Save / Load */
 function key(){
   return `stable-${yearSel.value}-${monthSel.value}`;
