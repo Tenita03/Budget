@@ -368,18 +368,22 @@ $("addBill").addEventListener("click", () => {
   `);
 });
 
-$("addDebt").onclick = ()=>!locked && addRow(debtT,
-  `<td data-label="Debt"><input></td>
-   <td data-label="Balance"><input type="number"></td>
-   <td data-label="APR %"><input type="number"></td>
-   <td data-label="Payment"><input type="number"></td>
-   <td data-label="Extra"><input type="number"></td>
-   <td data-label="Interest">$0.00</td>
-   <td data-label="Principal">$0.00</td>
-   <td data-label="New Balance">$0.00</td>`
-);
+$("addDebt").addEventListener("click", () => {
+  setDebug("Add Debt clicked ✅");
+  if(locked) return;
 
+  addRow(debtT,
+    `<td data-label="Debt"><input></td>
+     <td data-label="Balance"><input type="number" inputmode="decimal"></td>
+     <td data-label="APR %"><input type="number" inputmode="decimal"></td>
+     <td data-label="Payment"><input type="number" inputmode="decimal"></td>
+     <td data-label="Extra"><input type="number" inputmode="decimal"></td>
+     <td data-label="Interest">$0.00</td>
+     <td data-label="Principal">$0.00</td>
+     <td data-label="New Balance">$0.00</td>`
+  );
 });
+
 
 /* Lock */
 lockBtn.addEventListener("click", () => {
