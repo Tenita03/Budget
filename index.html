@@ -238,8 +238,7 @@ function addRow(table, cells){
     tr.remove();
     update();
   };
-  tr.querySelectorAll("input").forEach(i=>i.oninput=update);
-  table.appendChild(tr);
+  tr.querySelectorAll("input, select").forEach(i=>i.oninput=update);
 }
 
 $("addIncome").onclick = ()=>!locked && addRow(incomeT,
@@ -280,32 +279,7 @@ function sum(table){
   return t;
 }
 
-function updateDebtLinks(){
-  const debtMap = {};
-debtTable.querySelectorAll("tr").forEach(r=>{
-  const name = r.children[0].querySelector("input").value;
-  debtMap[name] = { pay: 0, extra: 0 };
-});
 
-billsTable.querySelectorAll("tr").forEach(r=>{
-  const paid = r.children[0].querySelector("input").checked;
-  const amt  = num(r.children[3].querySelector("input").value);
-  const link = r.children[4].querySelector("select").value;
-  const type = r.children[5].querySelector("select").value;
-
-  if(!paid){
-    bills += amt;
-    r.children[6].textContent = money(amt);
-  } else {
-    r.children[6].textContent = money(0);
-
-    if(link && debtMap[link]){
-      type === "principal"
-        ? debtMap[link].extra += amt
-        : debtMap[link].pay   += amt;
-    }
-  }
-});
 
 function update(){
   const start = Number(startBal.value)||0;
@@ -313,7 +287,10 @@ function update(){
   const bills = sumUnpaidBills();
   const debt = calculateDebt();
   const rem = start + income - bills - debt;
+
   remaining.textContent = money(rem);
+
+  renderPayoff();
   save();
 }
 
@@ -337,23 +314,15 @@ function calculateDebt(){
     const pay   = Number(r.children[3].querySelector("input").value)||0;
     const extra = Number(r.children[4].querySelector("input").value)||0;
 
-    const linkedPay   = debtMap[name]?.pay   || 0;
-const linkedExtra = debtMap[name]?.extra || 0;
-
-const interest = bal * (apr/100/12);
-const principal =
-  Math.max((pay + linkedPay) - interest, 0)
-  + extra
-  + linkedExtra;
-
-const newBal = Math.max(bal - principal, 0);
+    const interest = bal * (apr/100/12);
+    const principal = Math.max(pay - interest, 0) + extra;
+    const newBal = Math.max(bal - principal, 0);
 
     r.children[5].textContent = money(interest);
     r.children[6].textContent = money(principal);
     r.children[7].textContent = money(newBal);
 
     total += pay + extra;
-debtOut += pay + extra + linkedPay + linkedExtra;
   });
 
   return total;
