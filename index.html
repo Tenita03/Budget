@@ -357,21 +357,43 @@ function renderPayoff(){
         Payoff: ${result.months} months<br>
         Finish: ${finish.toLocaleString("default",{month:"long",year:"numeric"})}<br>
         Interest: ${money(result.interest)}<br>
-        <input type="number" placeholder="What-if extra"
-               value="${extraSim}"
-               style="margin-top:6px;width:120px;">
+        <div style="margin-top:8px;">
+  <div style="font-size:12px;font-weight:600;color:#64748b;">
+    What-if Extra (simulation only)
+  </div>
+
+  <input type="number"
+         value="${extraSim}"
+         style="margin-top:4px;width:140px;">
+
+  <div style="font-size:11px;color:#94a3b8;margin-top:4px;">
+    Does not affect your real budget
+  </div>
+
+  <div style="margin-top:6px;display:flex;gap:6px;">
+    <button type="button" data-add="25">+25</button>
+    <button type="button" data-add="50">+50</button>
+    <button type="button" data-add="100">+100</button>
+  </div>
+</div>
       `;
 
-      div.querySelector("input").oninput = e=>{
-        r.dataset.simExtra = e.target.value;
-        update(); // refresh everything (remaining stays accurate)
-      };
-    }
+      const input = div.querySelector("input");
 
-    box.appendChild(div);
-  });
-}
-renderPayoff();
+input.oninput = e=>{
+  r.dataset.simExtra = e.target.value;
+  update();
+};
+
+div.querySelectorAll("button[data-add]").forEach(btn=>{
+  btn.onclick = ()=>{
+    const add = Number(btn.dataset.add);
+    const current = Number(input.value)||0;
+    input.value = current + add;
+    r.dataset.simExtra = input.value;
+    update();
+  };
+});
 /* Save / Load */
 function key(){
   return `stable-${yearSel.value}-${monthSel.value}`;
