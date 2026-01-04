@@ -413,7 +413,31 @@ function toggleSection(header){
     : "Hide";
 }
 
+function serializeTable(table){
+  return [...table.querySelectorAll("tr")].map(tr =>
+    [...tr.querySelectorAll("input")].map(i => ({
+      type: i.type,
+      value: i.value,
+      checked: i.checked
+    }))
+  );
+}
 
+function restoreTable(table, rows, rowBuilder){
+  table.innerHTML = "";
+  (rows || []).forEach(data => {
+    const tr = rowBuilder();
+    const inputs = tr.querySelectorAll("input");
+
+    data.forEach((d, i) => {
+      if(!inputs[i]) return;
+      if(d.type === "checkbox") inputs[i].checked = d.checked;
+      else inputs[i].value = d.value;
+    });
+
+    table.appendChild(tr);
+  });
+}
 /* Row helper */
 function addRow(table, cellsHtml){
   const tr = document.createElement("tr");
@@ -424,6 +448,30 @@ function addRow(table, cellsHtml){
     tr.remove();
     update();
   };
+function wireRow(tr){
+  tr.querySelector(".remove").onclick = () => {
+    if(locked) return;
+    tr.remove();
+    update();
+  };
+
+  tr.querySelectorAll("input").forEach(i => {
+    i.addEventListener("input", update);
+    i.addEventListener("change", update);
+  });
+
+  const paid = tr.querySelector('td[data-label="Paid"] input');
+  const paidDate = tr.querySelector('td[data-label="Paid Date"] input');
+
+  if(paid && paidDate){
+    paid.addEventListener("change", () => {
+      paidDate.disabled = !paid.checked;
+      if(paid.checked && !paidDate.value){
+        paidDate.value = new Date().toISOString().slice(0,10);
+      }
+    });
+  }
+}
 const checkbox = tr.querySelector('input[type="checkbox"]');
 const paidDate = tr.querySelector('td[data-label="Paid Date"] input');
 
@@ -591,6 +639,8 @@ function save(){
   localStorage.setItem(key(), JSON.stringify({
     locked,
     start: startBal.value || "",
+    income: serializeTable(incomeT),
+    bills: serializeTable(billsT)
   }));
 }
 
@@ -602,13 +652,35 @@ function load(){
   lockBtn.textContent = locked ? "🔒 Unlock Month" : "🔓 Lock Month";
   startBal.value = d.start || "";
 
-  update();
-  setDebug("JS running ✅ (loaded)");
-}
+  restoreTable(incomeT, d.income, () => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td data-label="Date"><input type="date"></td>
+      <td data-label="Source"><input></td>
+      <td data-label="Amount"><input type="number" inputmode="decimal"></td>
+      <td><span class="remove">×</span></td>
+    `;
+    wireRow(tr);
+    return tr;
+  });
 
-monthSel.addEventListener("change", load);
-yearSel.addEventListener("change", load);
-startBal.addEventListener("input", update);
+  restoreTable(billsT, d.bills, () => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td data-label="Paid"><input type="checkbox"></td>
+      <td data-label="Due Date"><input type="date"></td>
+      <td data-label="Paid Date"><input type="date" disabled></td>
+      <td data-label="Name"><input></td>
+      <td data-label="Amount"><input type="number" inputmode="decimal"></td>
+      <td><span class="remove">×</span></td>
+    `;
+    wireRow(tr);
+    return tr;
+  });
+
+  update();
+  setDebug("Loaded ✅");
+}
 
 load();
 </script>
