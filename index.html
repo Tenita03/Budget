@@ -1,10 +1,10 @@
-<!— Budget App Code —>
+<!-- Budget App Code -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Paycheck Tracker – Stable Base</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Paycheck Tracker – Stable Base (Debug)</title>
 
 <style>
 :root{
@@ -14,7 +14,6 @@
   --muted:#64748b;
   --line:#e5e7eb;
   --brand:#007aff;
-  --danger:#fee2e2;
   --radius:16px;
   --shadow:0 10px 30px rgba(0,0,0,.06);
 }
@@ -42,10 +41,7 @@ body{
   margin-bottom:16px;
 }
 
-h2{
-  margin:0 0 12px;
-  font-size:18px;
-}
+h2{ margin:0 0 12px; font-size:18px; }
 
 .row{
   display:grid;
@@ -66,51 +62,40 @@ button{
   border:none;
   cursor:pointer;
 }
+button.secondary{ background:#94a3b8; }
 
-button.secondary{
-  background:#94a3b8;
-}
+table{ width:100%; border-collapse:collapse; }
+th, td{ padding:8px; border-bottom:1px solid var(--line); text-align:left; }
+th{ font-size:12px; color:var(--muted); }
 
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-
-th, td{
-  padding:8px;
-  border-bottom:1px solid var(--line);
-  text-align:left;
-}
-
-th{
-  font-size:12px;
-  color:var(--muted);
-}
-
-.remove{
-  cursor:pointer;
-  color:#94a3b8;
-}
-
-.remove:hover{
-  color:#ef4444;
-}
+.remove{ cursor:pointer; color:#94a3b8; font-size:18px; }
+.remove:hover{ color:#ef4444; }
 
 .kpi{
   display:flex;
   justify-content:space-between;
   align-items:center;
 }
+.kpi .value{ font-size:28px; font-weight:800; }
 
-.kpi .value{
-  font-size:28px;
-  font-weight:800;
-}
-
-.locked *:not(#lockBtn){
+/* ✅ safer lock: disables inputs & add buttons, not the whole UI */
+.locked input,
+.locked select,
+.locked .remove,
+.locked #addIncome,
+.locked #addBill,
+.locked #addDebt{
   pointer-events:none;
   opacity:.6;
 }
+
+/* debug pill */
+#debug{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:8px;
+}
+#debug strong{ color:var(--text); }
 
 @media (max-width:480px){
   .row{ grid-template-columns:1fr; }
@@ -121,205 +106,197 @@ th{
 <body>
 <div class="wrap" id="app">
 
-<!-- HEADER -->
-<div class="card">
-  <div class="row">
-    <select id="month"></select>
-    <select id="year"></select>
+  <!-- HEADER -->
+  <div class="card">
+    <div class="row">
+      <select id="month"></select>
+      <select id="year"></select>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+      <input id="startingBalance" type="number" placeholder="Starting balance" />
+      <button id="lockBtn" class="secondary" type="button">🔓 Lock Month</button>
+    </div>
+
+    <div id="debug">Status: <strong>loading…</strong></div>
   </div>
-  <div class="row" style="margin-top:10px;">
-    <input id="startingBalance" type="number" placeholder="Starting balance">
-    <button id="lockBtn" class="secondary">🔓 Lock Month</button>
+
+  <!-- REMAINING -->
+  <div class="card">
+    <div class="kpi">
+      <div>Remaining This Month</div>
+      <div class="value" id="remaining">$0.00</div>
+    </div>
   </div>
-</div>
 
-<!-- REMAINING -->
-<div class="card">
-  <div class="kpi">
-    <div>Remaining This Month</div>
-    <div class="value" id="remaining">$0.00</div>
+  <!-- INCOME -->
+  <div class="card">
+    <h2>Income</h2>
+    <table>
+      <thead><tr><th>Source</th><th>Amount</th><th></th></tr></thead>
+      <tbody id="income"></tbody>
+    </table>
+    <button id="addIncome" type="button">+ Add Income</button>
   </div>
-</div>
 
-<!-- INCOME -->
-<div class="card">
-  <h2>Income</h2>
-  <table>
-    <thead><tr><th>Source</th><th>Amount</th><th></th></tr></thead>
-    <tbody id="income"></tbody>
-  </table>
-  <button id="addIncome">+ Add Income</button>
-</div>
+  <!-- BILLS -->
+  <div class="card">
+    <h2>Bills</h2>
+    <table>
+      <thead><tr><th>✔</th><th>Name</th><th>Amount</th><th></th></tr></thead>
+      <tbody id="bills"></tbody>
+    </table>
+    <button id="addBill" type="button">+ Add Bill</button>
+  </div>
 
-<!-- BILLS -->
-<div class="card">
-  <h2>Bills</h2>
-  <table>
-   <thead>
-  <tr>
-    <th>✔</th>
-    <th>Name</th>
-    <th>Amount</th>
-    <th></th>
-  </tr>
-</thead>
-    <tbody id="bills"></tbody>
-  </table>
-  <button id="addBill">+ Add Bill</button>
-</div>
+  <!-- DEBT -->
+  <div class="card">
+    <h2>Debt</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Debt</th><th>Balance</th><th>APR %</th><th>Payment</th><th>Extra</th>
+          <th>Interest</th><th>Principal</th><th>New Balance</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="debt"></tbody>
+    </table>
+    <button id="addDebt" type="button">+ Add Debt</button>
+  </div>
 
-<!-- DEBT -->
-<div class="card">
-  <h2>Debt</h2>
-  <table>
-    <thead>
-  <tr>
-    <th>Debt</th>
-    <th>Balance</th>
-    <th>APR %</th>
-    <th>Payment</th>
-    <th>Extra</th>
-    <th>Interest</th>
-    <th>Principal</th>
-    <th>New Balance</th>
-    <th></th>
-  </tr>
-</thead>
-    <tbody id="debt"></tbody>
-  </table>
-  <button id="addDebt">+ Add Debt</button>
-</div>
-
-<div class="card">
-  <h2>Debt Payoff Insight</h2>
-  <div id="payoff"></div>
-</div>
 </div>
 
 <script>
-console.clear();
-/* ========= STABLE CORE ========= */
+/* ========= STABLE CORE (Debug) ========= */
 
 const $ = id => document.getElementById(id);
 const money = n => `$${(Number(n)||0).toFixed(2)}`;
+
+const app      = $("app");
+const debugEl  = $("debug");
 
 const monthSel = $("month");
 const yearSel  = $("year");
 const startBal = $("startingBalance");
 
-const incomeT = $("income");
-const billsT  = $("bills");
-const debtT   = $("debt");
+const incomeT  = $("income");
+const billsT   = $("bills");
+const debtT    = $("debt");
 
 const remaining = $("remaining");
-const lockBtn = $("lockBtn");
-const app = $("app");
+const lockBtn   = $("lockBtn");
 
 let locked = false;
 
+function setDebug(msg){
+  debugEl.innerHTML = `Status: <strong>${msg}</strong>`;
+}
+
 /* Month / Year */
-(() => {
+(function initMonthYear(){
   const now = new Date();
   for(let i=0;i<12;i++){
-    monthSel.add(new Option(
-      new Date(0,i).toLocaleString("default",{month:"long"}), i
-    ));
+    monthSel.add(new Option(new Date(0,i).toLocaleString("default",{month:"long"}), i));
   }
-  for(let y=2024;y<2036;y++) yearSel.add(new Option(y,y));
+  for(let y=2024;y<2036;y++){
+    yearSel.add(new Option(y, y));
+  }
   monthSel.value = now.getMonth();
   yearSel.value  = now.getFullYear();
 })();
 
-/* Rows */
-function addRow(table, cells){
+/* Row helper */
+function addRow(table, cellsHtml){
   const tr = document.createElement("tr");
-  tr.innerHTML = cells + `<td><span class="remove">×</span></td>`;
+  tr.innerHTML = cellsHtml + `<td><span class="remove" title="Remove">×</span></td>`;
+
   tr.querySelector(".remove").onclick = () => {
     if(locked) return;
     tr.remove();
     update();
   };
-  tr.querySelectorAll("input, select").forEach(i=>i.oninput=update);
-table.appendChild(tr);
-update();
+
+  tr.querySelectorAll("input, select").forEach(el => {
+    el.addEventListener("input", update);
+    el.addEventListener("change", update);
+  });
+
+  table.appendChild(tr);   // ✅ the key line
+  update();
 }
 
-$("addIncome").onclick = ()=>!locked && addRow(incomeT,
-  `<td><input></td><td><input type="number"></td>`
-);
+/* Buttons */
+$("addIncome").addEventListener("click", () => {
+  setDebug("Add Income clicked ✅");
+  if(locked) return;
+  addRow(incomeT, `<td><input></td><td><input type="number" inputmode="decimal"></td>`);
+});
 
-$("addBill").onclick = ()=>!locked && addRow(billsT,
-  `<td><input type="checkbox"></td>
-   <td><input></td>
-   <td><input type="number"></td>`
-);
+$("addBill").addEventListener("click", () => {
+  setDebug("Add Bill clicked ✅");
+  if(locked) return;
+  addRow(billsT, `
+    <td><input type="checkbox"></td>
+    <td><input></td>
+    <td><input type="number" inputmode="decimal"></td>
+  `);
+});
 
-$("addDebt").onclick = ()=>!locked && addRow(debtT,
-  `<td><input></td>
-   <td><input type="number"></td>
-   <td><input type="number"></td>
-   <td><input type="number"></td>
-   <td><input type="number"></td>
-   <td>$0.00</td>
-   <td>$0.00</td>
-   <td>$0.00</td>`
-);
+$("addDebt").addEventListener("click", () => {
+  setDebug("Add Debt clicked ✅");
+  if(locked) return;
+  addRow(debtT, `
+    <td><input></td>
+    <td><input type="number" inputmode="decimal"></td>
+    <td><input type="number" inputmode="decimal"></td>
+    <td><input type="number" inputmode="decimal"></td>
+    <td><input type="number" inputmode="decimal"></td>
+    <td>$0.00</td>
+    <td>$0.00</td>
+    <td>$0.00</td>
+  `);
+});
 
 /* Lock */
-lockBtn.onclick = ()=>{
+lockBtn.addEventListener("click", () => {
   locked = !locked;
-  app.classList.toggle("locked",locked);
+  app.classList.toggle("locked", locked);
   lockBtn.textContent = locked ? "🔒 Unlock Month" : "🔓 Lock Month";
   save();
-};
+  setDebug(locked ? "Locked" : "Unlocked");
+});
 
 /* Calculate */
-function sum(table){
-  let t=0;
-  table.querySelectorAll("tr").forEach(r=>{
-    t += Number(r.children[1].querySelector("input").value)||0;
+function sumIncome(){
+  let t = 0;
+  incomeT.querySelectorAll("tr").forEach(r=>{
+    t += Number(r.children[1].querySelector("input")?.value) || 0;
   });
   return t;
-}
-
-
-
-function update(){
-  const start = Number(startBal.value)||0;
-  const income = sum(incomeT);
-  const bills = sumUnpaidBills();
-  const debt = calculateDebt();
-  const rem = start + income - bills - debt;
-
-  remaining.textContent = money(rem);
-
-  renderPayoff();
-  save();
 }
 
 function sumUnpaidBills(){
   let t = 0;
   billsT.querySelectorAll("tr").forEach(r=>{
-    const paid = r.children[0].querySelector("input").checked;
-    const amt  = Number(r.children[2].querySelector("input").value)||0;
+    const paid = r.children[0].querySelector("input")?.checked;
+    const amt  = Number(r.children[2].querySelector("input")?.value) || 0;
     if(!paid) t += amt;
     r.style.opacity = paid ? 0.45 : 1;
   });
   return t;
 }
 
-function calculateDebt(){
+function calcDebtOut(){
   let total = 0;
-
   debtT.querySelectorAll("tr").forEach(r=>{
-    const bal   = Number(r.children[1].querySelector("input").value)||0;
-    const apr   = Number(r.children[2].querySelector("input").value)||0;
-    const pay   = Number(r.children[3].querySelector("input").value)||0;
-    const extra = Number(r.children[4].querySelector("input").value)||0;
+    const bal   = Number(r.children[1].querySelector("input")?.value) || 0;
+    const apr   = Number(r.children[2].querySelector("input")?.value) || 0;
+    const pay   = Number(r.children[3].querySelector("input")?.value) || 0;
+    const extra = Number(r.children[4].querySelector("input")?.value) || 0;
 
-    const interest = bal * (apr/100/12);
+    const interest  = bal * (apr/100/12);
     const principal = Math.max(pay - interest, 0) + extra;
-    const newBal = Math.max(bal - principal, 0);
+    const newBal    = Math.max(bal - principal, 0);
 
     r.children[5].textContent = money(interest);
     r.children[6].textContent = money(principal);
@@ -327,134 +304,45 @@ function calculateDebt(){
 
     total += pay + extra;
   });
-
   return total;
 }
 
-function renderPayoff(){
-  const box = document.getElementById("payoff");
-  box.innerHTML = "";
-
-  debtT.querySelectorAll("tr").forEach(r=>{
-    const name = r.children[0].querySelector("input").value || "Debt";
-    const bal  = Number(r.children[1].querySelector("input").value)||0;
-    const apr  = Number(r.children[2].querySelector("input").value)||0;
-    const pay  =
-      (Number(r.children[3].querySelector("input").value)||0) +
-      (Number(r.children[4].querySelector("input").value)||0);
-
-    const extraSim = Number(r.dataset.simExtra||0);
-    const result = calcPayoff(bal, apr, pay + extraSim);
-
-    const div = document.createElement("div");
-    div.style.marginBottom = "12px";
-
-    if(!result.ok){
-      div.innerHTML = `<strong>${name}</strong><br>⚠️ Payment too low to reduce balance`;
-    } else {
-      const finish = addMonths(new Date(), result.months);
-      div.innerHTML = `
-        <strong>${name}</strong><br>
-        Payoff: ${result.months} months<br>
-        Finish: ${finish.toLocaleString("default",{month:"long",year:"numeric"})}<br>
-        Interest: ${money(result.interest)}<br>
-        <div style="margin-top:8px;">
-  <div style="font-size:12px;font-weight:600;color:#64748b;">
-    What-if Extra (simulation only)
-  </div>
-
-  <input type="number"
-         value="${extraSim}"
-         style="margin-top:4px;width:140px;">
-
-  <div style="font-size:11px;color:#94a3b8;margin-top:4px;">
-    Does not affect your real budget
-  </div>
-
-  <div style="margin-top:6px;display:flex;gap:6px;">
-    <button type="button" data-add="25">+25</button>
-    <button type="button" data-add="50">+50</button>
-    <button type="button" data-add="100">+100</button>
-  </div>
-</div>
-      `;
-
-      const input = div.querySelector("input");
-
-input.oninput = e=>{
-  r.dataset.simExtra = e.target.value;
-  update();
-};
-
-div.querySelectorAll("button[data-add]").forEach(btn=>{
-  btn.onclick = ()=>{
-    const add = Number(btn.dataset.add);
-    const current = Number(input.value)||0;
-    input.value = current + add;
-    r.dataset.simExtra = input.value;
-    update();
-  };
-});
-    box.appendChild(div);
-  });
+function update(){
+  const start  = Number(startBal.value) || 0;
+  const income = sumIncome();
+  const bills  = sumUnpaidBills();
+  const debt   = calcDebtOut();
+  remaining.textContent = money(start + income - bills - debt);
+  save();
 }
 
-/* Save / Load */
+/* Save / Load (minimal + safe) */
 function key(){
   return `stable-${yearSel.value}-${monthSel.value}`;
-}
-
-function calcPayoff(balance, apr, payment){
-  balance = Number(balance)||0;
-  apr = Number(apr)||0;
-  payment = Number(payment)||0;
-
-  if(balance <= 0) return { ok:true, months:0, interest:0 };
-
-  const r = (apr/100)/12;
-  if(payment <= balance * r) return { ok:false };
-
-  const months = Math.ceil(
-    -Math.log(1 - (r * balance) / payment) / Math.log(1 + r)
-  );
-
-  return {
-    ok:true,
-    months,
-    interest: payment * months - balance
-  };
-}
-
-function addMonths(date, n){
-  const d = new Date(date);
-  d.setMonth(d.getMonth() + n);
-  return d;
 }
 
 function save(){
   localStorage.setItem(key(), JSON.stringify({
     locked,
-    start: startBal.value,
-    income:[...incomeT.children].map(r=>r.children[1].querySelector("input").value),
-    bills:[...billsT.children].map(r=>r.children[1].querySelector("input").value),
-    debt:[...debtT.children].map(r=>r.children[1].querySelector("input").value)
+    start: startBal.value || "",
   }));
 }
 
 function load(){
-  const d = JSON.parse(localStorage.getItem(key())||"{}");
+  const d = JSON.parse(localStorage.getItem(key()) || "{}");
 
-  locked = false; // ✅ force unlock on load
+  locked = !!d.locked;
+  app.classList.toggle("locked", locked);
+  lockBtn.textContent = locked ? "🔒 Unlock Month" : "🔓 Lock Month";
+  startBal.value = d.start || "";
 
-  app.classList.remove("locked");
-  lockBtn.textContent = "🔓 Lock Month";
-
-  startBal.value = d.start||"";
   update();
+  setDebug("JS running ✅ (loaded)");
 }
 
-monthSel.onchange = yearSel.onchange = load;
-startBal.oninput = update;
+monthSel.addEventListener("change", load);
+yearSel.addEventListener("change", load);
+startBal.addEventListener("input", update);
 
 load();
 </script>
