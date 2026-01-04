@@ -307,7 +307,14 @@ table tr:hover {
 </div>
 
     <table>
-      <thead><tr><th>Source</th><th>Amount</th><th></th></tr></thead>
+      <thead>
+  <tr>
+    <th>Date</th>
+    <th>Source</th>
+    <th>Amount</th>
+    <th></th>
+  </tr>
+</thead>
       <tbody id="income"></tbody>
     </table>
     <button id="addIncome" type="button">+ Add Income</button>
@@ -321,7 +328,16 @@ table tr:hover {
 </div>
 
     <table>
-      <thead><tr><th>✔</th><th>Name</th><th>Amount</th><th></th></tr></thead>
+      <thead>
+  <tr>
+    <th>✔</th>
+    <th>Due</th>
+    <th>Paid</th>
+    <th>Name</th>
+    <th>Amount</th>
+    <th></th>
+  </tr>
+</thead>
       <tbody id="bills"></tbody>
     </table>
     <button id="addBill" type="button">+ Add Bill</button>
@@ -408,7 +424,23 @@ function addRow(table, cellsHtml){
     tr.remove();
     update();
   };
+const checkbox = tr.querySelector('input[type="checkbox"]');
+const paidDate = tr.querySelector('td[data-label="Paid Date"] input');
 
+if(checkbox && paidDate){
+  checkbox.addEventListener("change", () => {
+    if(checkbox.checked){
+      paidDate.disabled = false;
+      if(!paidDate.value){
+        paidDate.value = new Date().toISOString().slice(0,10);
+      }
+    } else {
+      paidDate.value = "";
+      paidDate.disabled = true;
+    }
+    update();
+  });
+}
   tr.querySelectorAll("input, select").forEach(el => {
     el.addEventListener("input", update);
     el.addEventListener("change", update);
@@ -421,22 +453,42 @@ function addRow(table, cellsHtml){
 /* Buttons */
 $("addIncome").addEventListener("click", () => {
   setDebug("Add Income clicked ✅");
-  if (locked) return;
+  if(locked) return;
 
   addRow(incomeT, `
-    <td data-label="Source"><input></td>
-    <td data-label="Amount"><input type="number" inputmode="decimal"></td>
+    <td data-label="Date">
+      <input type="date">
+    </td>
+    <td data-label="Source">
+      <input>
+    </td>
+    <td data-label="Amount">
+      <input type="number" inputmode="decimal">
+    </td>
   `);
 });
 
 $("addBill").addEventListener("click", () => {
   setDebug("Add Bill clicked ✅");
   if(locked) return;
+
   addRow(billsT, `
-  <td data-label="Paid"><input type="checkbox"></td>
-  <td data-label="Name"><input></td>
-  <td data-label="Amount"><input type="number" inputmode="decimal"></td>
-`);
+    <td data-label="Paid">
+      <input type="checkbox">
+    </td>
+    <td data-label="Due Date">
+      <input type="date">
+    </td>
+    <td data-label="Paid Date">
+      <input type="date" disabled>
+    </td>
+    <td data-label="Name">
+      <input>
+    </td>
+    <td data-label="Amount">
+      <input type="number" inputmode="decimal">
+    </td>
+  `);
 });
 
 $("addDebt").addEventListener("click", () => {
