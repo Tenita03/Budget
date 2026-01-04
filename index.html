@@ -442,9 +442,12 @@ function save(){
 
 function load(){
   const d = JSON.parse(localStorage.getItem(key())||"{}");
-  locked = !!d.locked;
-  app.classList.toggle("locked",locked);
-  lockBtn.textContent = locked ? "🔒 Unlock Month" : "🔓 Lock Month";
+
+  locked = false; // ✅ force unlock on load
+
+  app.classList.remove("locked");
+  lockBtn.textContent = "🔓 Lock Month";
+
   startBal.value = d.start||"";
   update();
 }
