@@ -239,6 +239,8 @@ function addRow(table, cells){
     update();
   };
   tr.querySelectorAll("input, select").forEach(i=>i.oninput=update);
+table.appendChild(tr);
+update();
 }
 
 $("addIncome").onclick = ()=>!locked && addRow(incomeT,
@@ -362,7 +364,7 @@ function renderPayoff(){
 
       div.querySelector("input").oninput = e=>{
         r.dataset.simExtra = e.target.value;
-        renderPayoff();
+        update(); // refresh everything (remaining stays accurate)
       };
     }
 
