@@ -225,6 +225,47 @@ table tr:hover {
   }
 }
 
+
+/* ===== FINAL MOBILE LABEL FIX (DO NOT DUPLICATE ABOVE) ===== */
+@media (max-width: 430px) {
+
+  thead {
+    display: none;
+  }
+
+  tbody tr {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.04);
+  }
+
+  tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 0;
+    border: none;
+  }
+
+  /* 🔑 THIS IS THE IMPORTANT PART */
+  tbody td::before {
+    content: attr(data-label);
+    color: #0f172a;      /* readable */
+    font-weight: 700;   /* visible */
+    font-size: 13px;
+    opacity: 1;
+  }
+
+  tbody td input {
+    width: 100%;
+    max-width: 140px;
+    text-align: right;
+  }
+}
 </style>
 </head>
 
