@@ -49,6 +49,24 @@ h2{ margin:0 0 12px; font-size:18px; }
   gap:12px;
 }
 
+.section-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  cursor:pointer;
+}
+
+.section-toggle {
+  font-size:13px;
+  color:var(--muted);
+}
+
+.collapsed table,
+.collapsed button {
+  display:none;
+}
+
+
 input, select, button{
   padding:10px;
   border-radius:10px;
@@ -161,9 +179,17 @@ table tr:hover {
     </div>
   </div>
 
+<div class="card" id="summary" style="font-size:14px;color:#475569;">
+</div>
+
+
   <!-- INCOME -->
   <div class="card">
-    <h2>Income</h2>
+    <div class="section-header" onclick="toggleSection(this)">
+  <h2>Income</h2>
+  <span class="section-toggle">Hide</span>
+</div>
+
     <table>
       <thead><tr><th>Source</th><th>Amount</th><th></th></tr></thead>
       <tbody id="income"></tbody>
@@ -173,7 +199,11 @@ table tr:hover {
 
   <!-- BILLS -->
   <div class="card">
-    <h2>Bills</h2>
+    <div class="section-header" onclick="toggleSection(this)">
+  <h2>Bills</h2>
+  <span class="section-toggle">Hide</span>
+</div>
+
     <table>
       <thead><tr><th>✔</th><th>Name</th><th>Amount</th><th></th></tr></thead>
       <tbody id="bills"></tbody>
@@ -183,7 +213,11 @@ table tr:hover {
 
   <!-- DEBT -->
   <div class="card">
-    <h2>Debt</h2>
+    <div class="section-header" onclick="toggleSection(this)">
+  <h2>Debt</h2>
+  <span class="section-toggle">Hide</span>
+</div>
+
     <table>
       <thead>
         <tr>
@@ -236,6 +270,17 @@ function setDebug(msg){
   monthSel.value = now.getMonth();
   yearSel.value  = now.getFullYear();
 })();
+
+function toggleSection(header){
+  const card = header.closest(".card");
+  const label = header.querySelector(".section-toggle");
+
+  card.classList.toggle("collapsed");
+  label.textContent = card.classList.contains("collapsed")
+    ? "Show"
+    : "Hide";
+}
+
 
 /* Row helper */
 function addRow(table, cellsHtml){
@@ -338,6 +383,21 @@ function calcDebtOut(){
   });
   return total;
 }
+
+function renderSummary(){
+  const paidBills = [...billsT.querySelectorAll("tr")]
+    .filter(r => r.children[0].querySelector("input").checked).length;
+
+  const debtPaid = calculateDebt();
+  const msg =
+    paidBills > 0 || debtPaid > 0
+      ? `You paid ${paidBills} bill${paidBills!==1?"s":""} and reduced debt by ${money(debtPaid)} this month.`
+      : `No spending recorded yet.`;
+
+  document.getElementById("summary").textContent = msg;
+}
+renderSummary();
+
 
 function update(){
   const start  = Number(startBal.value) || 0;
