@@ -422,17 +422,19 @@ function addRow(table, cellsHtml){
 $("addIncome").addEventListener("click", () => {
   setDebug("Add Income clicked ✅");
   if(locked) return;
-  addRow(incomeT, `<td><input></td><td><input type="number" inputmode="decimal"></td>`);
-});
+  addRow(incomeT, `
+  <td data-label="Source"><input></td>
+  <td data-label="Amount"><input type="number" inputmode="decimal"></td>
+`);
 
 $("addBill").addEventListener("click", () => {
   setDebug("Add Bill clicked ✅");
   if(locked) return;
   addRow(billsT, `
-    <td><input type="checkbox"></td>
-    <td><input></td>
-    <td><input type="number" inputmode="decimal"></td>
-  `);
+  <td data-label="Paid"><input type="checkbox"></td>
+  <td data-label="Name"><input></td>
+  <td data-label="Amount"><input type="number" inputmode="decimal"></td>
+`);
 });
 
 $("addDebt").addEventListener("click", () => {
