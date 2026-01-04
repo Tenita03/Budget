@@ -421,11 +421,13 @@ function addRow(table, cellsHtml){
 /* Buttons */
 $("addIncome").addEventListener("click", () => {
   setDebug("Add Income clicked ✅");
-  if(locked) return;
+  if (locked) return;
+
   addRow(incomeT, `
-  <td data-label="Source"><input></td>
-  <td data-label="Amount"><input type="number" inputmode="decimal"></td>
-`);
+    <td data-label="Source"><input></td>
+    <td data-label="Amount"><input type="number" inputmode="decimal"></td>
+  `);
+});
 
 $("addBill").addEventListener("click", () => {
   setDebug("Add Bill clicked ✅");
