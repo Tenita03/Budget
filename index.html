@@ -358,9 +358,79 @@ debtOut += pay + extra + linkedPay + linkedExtra;
 
   return total;
 }
+
+function renderPayoff(){
+  const box = document.getElementById("payoff");
+  box.innerHTML = "";
+
+  debtT.querySelectorAll("tr").forEach(r=>{
+    const name = r.children[0].querySelector("input").value || "Debt";
+    const bal  = Number(r.children[1].querySelector("input").value)||0;
+    const apr  = Number(r.children[2].querySelector("input").value)||0;
+    const pay  =
+      (Number(r.children[3].querySelector("input").value)||0) +
+      (Number(r.children[4].querySelector("input").value)||0);
+
+    const extraSim = Number(r.dataset.simExtra||0);
+    const result = calcPayoff(bal, apr, pay + extraSim);
+
+    const div = document.createElement("div");
+    div.style.marginBottom = "12px";
+
+    if(!result.ok){
+      div.innerHTML = `<strong>${name}</strong><br>⚠️ Payment too low to reduce balance`;
+    } else {
+      const finish = addMonths(new Date(), result.months);
+      div.innerHTML = `
+        <strong>${name}</strong><br>
+        Payoff: ${result.months} months<br>
+        Finish: ${finish.toLocaleString("default",{month:"long",year:"numeric"})}<br>
+        Interest: ${money(result.interest)}<br>
+        <input type="number" placeholder="What-if extra"
+               value="${extraSim}"
+               style="margin-top:6px;width:120px;">
+      `;
+
+      div.querySelector("input").oninput = e=>{
+        r.dataset.simExtra = e.target.value;
+        renderPayoff();
+      };
+    }
+
+    box.appendChild(div);
+  });
+}
+renderPayoff();
 /* Save / Load */
 function key(){
   return `stable-${yearSel.value}-${monthSel.value}`;
+}
+
+function calcPayoff(balance, apr, payment){
+  balance = Number(balance)||0;
+  apr = Number(apr)||0;
+  payment = Number(payment)||0;
+
+  if(balance <= 0) return { ok:true, months:0, interest:0 };
+
+  const r = (apr/100)/12;
+  if(payment <= balance * r) return { ok:false };
+
+  const months = Math.ceil(
+    -Math.log(1 - (r * balance) / payment) / Math.log(1 + r)
+  );
+
+  return {
+    ok:true,
+    months,
+    interest: payment * months - balance
+  };
+}
+
+function addMonths(date, n){
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + n);
+  return d;
 }
 
 function save(){
