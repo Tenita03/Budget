@@ -447,6 +447,34 @@ function serializeTable(table){
   );
 }
 
+function getIncomeData(){
+  return [...incomeT.children].map(r => ({
+    date: r.children[0].querySelector("input").value,
+    source: r.children[1].querySelector("input").value,
+    amount: r.children[2].querySelector("input").value
+  }));
+}
+
+function getBillsData(){
+  return [...billsT.children].map(r => ({
+    paid: r.children[0].querySelector("input").checked,
+    dueDate: r.children[1].querySelector("input").value,
+    paidDate: r.children[2].querySelector("input").value,
+    name: r.children[3].querySelector("input").value,
+    amount: r.children[4].querySelector("input").value
+  }));
+}
+
+function getDebtData(){
+  return [...debtT.children].map(r => ({
+    name: r.children[0].querySelector("input").value,
+    balance: r.children[1].querySelector("input").value,
+    apr: r.children[2].querySelector("input").value,
+    payment: r.children[3].querySelector("input").value,
+    extra: r.children[4].querySelector("input").value
+  }));
+}
+
 function restoreTable(table, rows, rowBuilder){
   table.innerHTML = "";
   (rows || []).forEach(data => {
@@ -460,6 +488,47 @@ function restoreTable(table, rows, rowBuilder){
     });
 
     table.appendChild(tr);
+  });
+}
+
+function clearTable(table){
+  table.innerHTML = "";
+}
+
+function loadIncomeRows(data=[]){
+  data.forEach(row => {
+    addRow(incomeT, `
+      <td data-label="Date"><input type="date" value="${row.date || ""}"></td>
+      <td data-label="Source"><input value="${row.source || ""}"></td>
+      <td data-label="Amount"><input type="number" inputmode="decimal" value="${row.amount || ""}"></td>
+    `);
+  });
+}
+
+function loadBillRows(data=[]){
+  data.forEach(row => {
+    addRow(billsT, `
+      <td data-label="Paid"><input type="checkbox" ${row.paid ? "checked" : ""}></td>
+      <td data-label="Due Date"><input type="date" value="${row.dueDate || ""}"></td>
+      <td data-label="Paid Date"><input type="date" value="${row.paidDate || ""}"></td>
+      <td data-label="Name"><input value="${row.name || ""}"></td>
+      <td data-label="Amount"><input type="number" inputmode="decimal" value="${row.amount || ""}"></td>
+    `);
+  });
+}
+
+function loadDebtRows(data=[]){
+  data.forEach(row => {
+    addRow(debtT, `
+      <td data-label="Debt"><input value="${row.name || ""}"></td>
+      <td data-label="Balance"><input type="number" inputmode="decimal" value="${row.balance || ""}"></td>
+      <td data-label="APR %"><input type="number" inputmode="decimal" value="${row.apr || ""}"></td>
+      <td data-label="Payment"><input type="number" inputmode="decimal" value="${row.payment || ""}"></td>
+      <td data-label="Extra"><input type="number" inputmode="decimal" value="${row.extra || ""}"></td>
+      <td data-label="Interest">$0.00</td>
+      <td data-label="Principal">$0.00</td>
+      <td data-label="New Balance">$0.00</td>
+    `);
   });
 }
 /* Row helper */
@@ -698,9 +767,9 @@ function save(){
   localStorage.setItem(key(), JSON.stringify({
     locked,
     start: startBal.value || "",
-    income: serializeTable(incomeT),
-    bills: serializeTable(billsT),
-    debt: serializeTable(debtT)
+    income: getIncomeData(),
+    bills: getBillsData(),
+    debt: getDebtData()
   }));
 }
 
@@ -710,19 +779,20 @@ function load(){
   locked = !!d.locked;
   app.classList.toggle("locked", locked);
   lockBtn.textContent = locked ? "🔒 Unlock Month" : "🔓 Lock Month";
+
   startBal.value = d.start || "";
 
-  restoreTable(incomeT, d.income, () => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td data-label="Date"><input type="date"></td>
-      <td data-label="Source"><input></td>
-      <td data-label="Amount"><input type="number" inputmode="decimal"></td>
-      <td><span class="remove">×</span></td>
-    `;
-    wireRow(tr);
-    return tr;
-  });
+  clearTable(incomeT);
+  clearTable(billsT);
+  clearTable(debtT);
+
+  loadIncomeRows(d.income);
+  loadBillRows(d.bills);
+  loadDebtRows(d.debt);
+
+  update();
+  setDebug("Loaded month data ✅");
+}
 
   restoreTable(billsT, d.bills, () => {
     const tr = document.createElement("tr");
