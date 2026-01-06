@@ -700,15 +700,21 @@ function sumIncome(){
   return t;
 }
 
-function sumUnpaidBills(){
-  let t = 0;
+function sumBills(){
+  let total = 0;
+
   billsT.querySelectorAll("tr").forEach(r=>{
-    const paid = r.children[0].querySelector("input")?.checked;
-    const amt  = Number(r.children[2].querySelector("input")?.value) || 0;
-    if(!paid) t += amt;
+    const amt = Number(
+      r.querySelector('td[data-label="Amount"] input')?.value
+    ) || 0;
+
+    total += amt;
+
+    const paid = r.querySelector('td[data-label="Paid"] input')?.checked;
     r.style.opacity = paid ? 0.45 : 1;
   });
-  return t;
+
+  return total;
 }
 
 function calcDebtOut(){
@@ -750,7 +756,7 @@ renderSummary();
 function update(){
   const start  = Number(startBal.value) || 0;
   const income = sumIncome();
-  const bills  = sumUnpaidBills();
+  const bills = sumBills();
   const debt   = calcDebtOut();
 
   const remainingValue = start + income - bills - debt;
