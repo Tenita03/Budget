@@ -640,7 +640,8 @@ function save(){
     locked,
     start: startBal.value || "",
     income: serializeTable(incomeT),
-    bills: serializeTable(billsT)
+    bills: serializeTable(billsT),
+    debt: serializeTable(debtT)
   }));
 }
 
@@ -677,6 +678,22 @@ function load(){
     wireRow(tr);
     return tr;
   });
+restoreTable(debtT, d.debt, () => {
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td data-label="Debt"><input></td>
+    <td data-label="Balance"><input type="number" inputmode="decimal"></td>
+    <td data-label="APR %"><input type="number" inputmode="decimal"></td>
+    <td data-label="Payment"><input type="number" inputmode="decimal"></td>
+    <td data-label="Extra"><input type="number" inputmode="decimal"></td>
+    <td data-label="Interest">$0.00</td>
+    <td data-label="Principal">$0.00</td>
+    <td data-label="New Balance">$0.00</td>
+    <td><span class="remove">×</span></td>
+  `;
+  wireRow(tr);
+  return tr;
+});
 
   update();
   setDebug("Loaded ✅");
