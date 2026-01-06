@@ -294,8 +294,6 @@ table tr:hover {
   color:#334155;
 }
 
-}
-
 /* ===== DEBT CARDS ===== */
 .debt-card{
   border:1px solid var(--line);
@@ -490,16 +488,6 @@ function toggleSection(header){
     : "Hide";
 }
 
-function serializeTable(table){
-  return [...table.querySelectorAll("tr")].map(tr =>
-    [...tr.querySelectorAll("input")].map(i => ({
-      type: i.type,
-      value: i.value,
-      checked: i.checked
-    }))
-  );
-}
-
 function getIncomeData(){
   return [...incomeT.children].map(r => ({
     date: r.children[0].querySelector("input").value,
@@ -531,21 +519,6 @@ function getDebtData(){
   });
 }
 
-function restoreTable(table, rows, rowBuilder){
-  table.innerHTML = "";
-  (rows || []).forEach(data => {
-    const tr = rowBuilder();
-    const inputs = tr.querySelectorAll("input");
-
-    data.forEach((d, i) => {
-      if(!inputs[i]) return;
-      if(d.type === "checkbox") inputs[i].checked = d.checked;
-      else inputs[i].value = d.value;
-    });
-
-    table.appendChild(tr);
-  });
-}
 
 function clearTable(table){
   table.innerHTML = "";
@@ -582,12 +555,6 @@ function addRow(table, cellsHtml){
   const tr = document.createElement("tr");
   tr.innerHTML = cellsHtml + `<td><span class="remove" title="Remove">×</span></td>`;
 
-  tr.querySelector(".remove").onclick = () => {
-    if(locked) return;
-    tr.remove();
-    update();
-  };
-function wireRow(tr){
   tr.querySelector(".remove").onclick = () => {
     if(locked) return;
     tr.remove();
@@ -883,36 +850,6 @@ function load(){
   update();
   setDebug("Loaded month data ✅");
 }
-
-  restoreTable(billsT, d.bills, () => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td data-label="Paid"><input type="checkbox"></td>
-      <td data-label="Due Date"><input type="date"></td>
-      <td data-label="Paid Date"><input type="date" disabled></td>
-      <td data-label="Name"><input></td>
-      <td data-label="Amount"><input type="number" inputmode="decimal"></td>
-      <td><span class="remove">×</span></td>
-    `;
-    wireRow(tr);
-    return tr;
-  });
-restoreTable(debtT, d.debt, () => {
-  const tr = document.createElement("tr");
-  tr.innerHTML = `
-    <td data-label="Debt"><input></td>
-    <td data-label="Balance"><input type="number" inputmode="decimal"></td>
-    <td data-label="APR %"><input type="number" inputmode="decimal"></td>
-    <td data-label="Payment"><input type="number" inputmode="decimal"></td>
-    <td data-label="Extra"><input type="number" inputmode="decimal"></td>
-    <td data-label="Interest">$0.00</td>
-    <td data-label="Principal">$0.00</td>
-    <td data-label="New Balance">$0.00</td>
-    <td><span class="remove">×</span></td>
-  `;
-  wireRow(tr);
-  return tr;
-});
 
   update();
   setDebug("Loaded ✅");
