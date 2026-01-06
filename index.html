@@ -558,6 +558,9 @@ function addRow(table, cellsHtml){
   tr.querySelector(".remove").onclick = () => {
     if(locked) return;
     tr.remove();
+	function renderBreakdown(start, income, bills, debt, remainingValue){
+  const box = document.getElementById("breakdownContent");
+  box.innerHTML = `
     update();
   };
 
@@ -566,10 +569,6 @@ function addRow(table, cellsHtml){
     i.addEventListener("change", update);
   });
 
-
-function renderBreakdown(start, income, bills, debt, remainingValue){
-  const box = document.getElementById("breakdownContent");
-  box.innerHTML = `
     <div class="breakdown-line">
       <span>Starting Balance</span>
       <span>${money(start)}</span>
@@ -608,23 +607,7 @@ function renderBreakdown(start, income, bills, debt, remainingValue){
     });
   }
 }
-const checkbox = tr.querySelector('input[type="checkbox"]');
-const paidDate = tr.querySelector('td[data-label="Paid Date"] input');
 
-if(checkbox && paidDate){
-  checkbox.addEventListener("change", () => {
-    if(checkbox.checked){
-      paidDate.disabled = false;
-      if(!paidDate.value){
-        paidDate.value = new Date().toISOString().slice(0,10);
-      }
-    } else {
-      paidDate.value = "";
-      paidDate.disabled = true;
-    }
-    update();
-  });
-}
   tr.querySelectorAll("input, select").forEach(el => {
     el.addEventListener("input", update);
     el.addEventListener("change", update);
@@ -851,11 +834,12 @@ function load(){
   setDebug("Loaded month data ✅");
 }
 
-  update();
-  setDebug("Loaded ✅");
-}
-
+ 
 load();
+
+localStorage.clear();
+location.reload();
+
 </script>
 </body>
 </html>
