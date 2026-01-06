@@ -248,44 +248,53 @@ table tr:hover {
 
 
 /* ===== FINAL MOBILE LABEL FIX (DO NOT DUPLICATE ABOVE) ===== */
-@media (max-width: 430px) {
 
-  thead {
-    display: none;
-  }
+/* ===== DEBT CARDS ===== */
 
-  tbody tr {
-    background: #ffffff;
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 12px;
-    margin-bottom: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,.04);
-  }
+.debt-title{
+  font-weight:700;
+  font-size:16px;
+  margin-bottom:10px;
+}
 
-  tbody td {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    padding: 6px 0;
-    border: none;
-  }
+.debt-field{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:8px;
+}
 
-  /* 🔑 THIS IS THE IMPORTANT PART */
-  tbody td::before {
-    content: attr(data-label);
-    color: #0f172a;      /* readable */
-    font-weight: 700;   /* visible */
-    font-size: 13px;
-    opacity: 1;
-  }
+.debt-field label{
+  font-size:13px;
+  color:var(--muted);
+}
 
-  tbody td input {
-    width: 100%;
-    max-width: 140px;
-    text-align: right;
-  }
+.debt-field input{
+  max-width:140px;
+  text-align:right;
+}
+
+.debt-results{
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px dashed var(--line);
+  font-size:13px;
+}
+
+.debt-results div{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:4px;
+  font-weight:600;
+}
+
+.debt-remove{
+  margin-top:10px;
+  background:#e5e7eb;
+  color:#334155;
+}
+
+}
 
 /* ===== DEBT CARDS ===== */
 .debt-card{
@@ -338,8 +347,6 @@ table tr:hover {
   margin-top:10px;
   background:#e5e7eb;
   color:#334155;
-}
-
 }
 </style>
 </head>
@@ -430,7 +437,6 @@ table tr:hover {
 
     <div id="debt"></div>
 <button id="addDebt" type="button">+ Add Debt</button>
-    <button id="addDebt" type="button">+ Add Debt</button>
   </div>
 
 </div>
@@ -818,16 +824,8 @@ function calcDebtOut(){
 }
 
 function renderSummary(){
-  const paidBills = [...billsT.querySelectorAll("tr")]
-    .filter(r => r.children[0].querySelector("input").checked).length;
-
-  const debtPaid = calculateDebt();
-  const msg =
-    paidBills > 0 || debtPaid > 0
-      ? `You paid ${paidBills} bill${paidBills!==1?"s":""} and reduced debt by ${money(debtPaid)} this month.`
-      : `No spending recorded yet.`;
-
-  document.getElementById("summary").textContent = msg;
+  document.getElementById("summary").textContent =
+    "Monthly activity updated.";
 }
 renderSummary();
 
