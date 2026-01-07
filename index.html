@@ -559,8 +559,8 @@ function addRow(table, cellsHtml){
     if(locked) return;
     tr.remove();
     update();
-  
-});
+  };
+
   tr.querySelectorAll("input").forEach(input => {
     input.addEventListener("input", update);
     input.addEventListener("change", update);
@@ -586,7 +586,7 @@ function addRow(table, cellsHtml){
 
   table.appendChild(tr);
   update();
-
+}
 
     <div class="breakdown-line">
       <span>Bills</span>
