@@ -865,6 +865,13 @@ function load(){
   setDebug("Loaded month data ✅");
 }
 
+function handleMonthChange(){
+  save();   // save current month before switching
+  load();   // load newly selected month
+}
+
+monthSel.addEventListener("change", handleMonthChange);
+yearSel.addEventListener("change", handleMonthChange);
  
 load();
 
