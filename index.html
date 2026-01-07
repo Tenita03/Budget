@@ -553,37 +553,39 @@ function loadDebtRows(data=[]){
 /* Row helper */
 function addRow(table, cellsHtml){
   const tr = document.createElement("tr");
-  tr.innerHTML = cellsHtml + `<td><span class="remove" title="Remove">×</span></td>`;
+  tr.innerHTML = cellsHtml + `<td><span class="remove">×</span></td>`;
 
   tr.querySelector(".remove").onclick = () => {
     if(locked) return;
     tr.remove();
-	function renderBreakdown(start, income, bills, debt, remainingValue){
-  const box = document.getElementById("breakdownContent");
-  box.innerHTML = `
     update();
   };
 
-  tr.querySelectorAll("input").forEach(i => {
-    i.addEventListener("input", update);
-    i.addEventListener("change", update);
-
-const paid = tr.querySelector('td[data-label="Paid"] input');
-const paidDate = tr.querySelector('td[data-label="Paid Date"] input');
-
-if(paid && paidDate){
-  paid.addEventListener("change", () => {
-    if(paid.checked){
-      paidDate.disabled = false;
-      if(!paidDate.value){
-        paidDate.value = new Date().toISOString().slice(0,10);
-      }
-    } else {
-      paidDate.value = "";
-      paidDate.disabled = true;
-    }
-    update();
+  tr.querySelectorAll("input").forEach(input => {
+    input.addEventListener("input", update);
+    input.addEventListener("change", update);
   });
+
+  const paid = tr.querySelector('td[data-label="Paid"] input');
+  const paidDate = tr.querySelector('td[data-label="Paid Date"] input');
+
+  if(paid && paidDate){
+    paid.addEventListener("change", () => {
+      if(paid.checked){
+        paidDate.disabled = false;
+        if(!paidDate.value){
+          paidDate.value = new Date().toISOString().slice(0,10);
+        }
+      } else {
+        paidDate.value = "";
+        paidDate.disabled = true;
+      }
+      update();
+    });
+  }
+
+  table.appendChild(tr);
+  update();
 }
   });
 
@@ -808,22 +810,7 @@ function renderSummary(){
   document.getElementById("summary").textContent =
     "Monthly activity updated.";
 }
-renderSummary();
 
-
-function update(){
-  const start  = Number(startBal.value) || 0;
-  const income = sumIncome();
-  const bills = sumBills();
-  const debt   = calcDebtOut();
-
-  const remainingValue = start + income - bills - debt;
-  remaining.textContent = money(remainingValue);
-
-  renderBreakdown(start, income, bills, debt, remainingValue);
-
-  save();
-}
 
 /* Save / Load (minimal + safe) */
 function key(){
@@ -865,6 +852,32 @@ function load(){
   setDebug("Loaded month data ✅");
 }
 
+function renderBreakdown(start, income, bills, debt, remainingValue){
+  const box = document.getElementById("breakdownContent");
+  box.innerHTML = `
+    <div class="breakdown-line">
+      <span>Starting Balance</span>
+      <span>${money(start)}</span>
+    </div>
+    <div class="breakdown-line">
+      <span>Income</span>
+      <span style="color:#16a34a">+${money(income)}</span>
+    </div>
+    <div class="breakdown-line">
+      <span>Bills</span>
+      <span style="color:#dc2626">−${money(bills)}</span>
+    </div>
+    <div class="breakdown-line">
+      <span>Debt Payments</span>
+      <span style="color:#dc2626">−${money(debt)}</span>
+    </div>
+    <div class="breakdown-line breakdown-total">
+      <span>Remaining</span>
+      <span>${money(remainingValue)}</span>
+    </div>
+  `;
+}
+
 function handleMonthChange(){
   save();   // save current month before switching
   load();   // load newly selected month
@@ -874,9 +887,6 @@ monthSel.addEventListener("change", handleMonthChange);
 yearSel.addEventListener("change", handleMonthChange);
  
 load();
-
-localStorage.clear();
-location.reload();
 
 </script>
 </body>
