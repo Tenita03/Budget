@@ -559,7 +559,7 @@ function addRow(table, cellsHtml){
     if(locked) return;
     tr.remove();
     update();
-  };
+  
 
   tr.querySelectorAll("input").forEach(input => {
     input.addEventListener("input", update);
@@ -588,11 +588,6 @@ function addRow(table, cellsHtml){
   update();
 }
   });
-
-    <div class="breakdown-line">
-      <span>Starting Balance</span>
-      <span>${money(start)}</span>
-    </div>
 
     <div class="breakdown-line">
       <span>Income</span>
@@ -810,6 +805,19 @@ function renderSummary(){
     "Monthly activity updated.";
 }
 
+
+function update(){
+  const start  = Number(startBal.value) || 0;
+  const income = sumIncome();
+  const bills  = sumBills();
+  const debt   = calcDebtOut();
+
+  const remainingValue = start + income - bills - debt;
+  remaining.textContent = money(remainingValue);
+
+  renderBreakdown(start, income, bills, debt, remainingValue);
+  save();
+}
 
 /* Save / Load (minimal + safe) */
 function key(){
