@@ -119,16 +119,17 @@ table tr:hover { background:#f8fafc; }
   font-weight:700;
 }
 
-/* lock only edits */
-.locked input,
-.locked select,
+/* Lock ONLY data entry — never navigation */
+.locked #income input,
+.locked #bills input,
+.locked #debt input,
 .locked .remove,
+.locked .debt-remove,
 .locked #addIncome,
 .locked #addBill,
-.locked #addDebt,
-.locked .debt-remove{
-  pointer-events:none;
-  opacity:.6;
+.locked #addDebt {
+  pointer-events: none;
+  opacity: .6;
 }
 
 /* debug */
@@ -636,6 +637,10 @@ function load(){
   lastKey = key(); // update what "current month" means
 
   const d = JSON.parse(localStorage.getItem(lastKey) || "{}");
+
+if (!localStorage.getItem(key())) {
+  locked = false;
+}
 
   locked = !!d.locked;
   app.classList.toggle("locked", locked);
