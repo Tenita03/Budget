@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Paycheck Tracker – Stable</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Paycheck Tracker – Stable Base</title>
 
 <style>
 :root{
@@ -17,7 +17,7 @@
   --shadow:0 10px 30px rgba(0,0,0,.06);
 }
 
-*{box-sizing:border-box}
+*{ box-sizing:border-box; }
 
 body{
   margin:0;
@@ -26,7 +26,11 @@ body{
   color:var(--text);
 }
 
-.wrap{max-width:900px;margin:auto;padding:16px}
+.wrap{
+  max-width:900px;
+  margin:auto;
+  padding:16px;
+}
 
 .card{
   background:var(--card);
@@ -36,7 +40,7 @@ body{
   margin-bottom:16px;
 }
 
-h2{margin:0 0 12px;font-size:18px}
+h2{ margin:0 0 12px; font-size:18px; }
 
 .row{
   display:grid;
@@ -44,7 +48,25 @@ h2{margin:0 0 12px;font-size:18px}
   gap:12px;
 }
 
-input,select,button{
+.section-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  cursor:pointer;
+}
+
+.section-toggle {
+  font-size:13px;
+  color:var(--muted);
+}
+
+.collapsed table,
+.collapsed button,
+.collapsed #debt {
+  display:none;
+}
+
+input, select, button{
   padding:10px;
   border-radius:10px;
   border:1px solid var(--line);
@@ -57,51 +79,154 @@ button{
   border:none;
   cursor:pointer;
 }
+button.secondary{ background:#94a3b8; }
 
-button.secondary{background:#94a3b8}
+table{ width:100%; border-collapse:collapse; }
+th, td{ padding:8px; border-bottom:1px solid var(--line); text-align:left; }
+th{ font-size:12px; color:var(--muted); }
 
-table{width:100%;border-collapse:collapse}
-th,td{padding:8px;border-bottom:1px solid var(--line);text-align:left}
-th{font-size:12px;color:var(--muted)}
+table input { background:#fafafa; }
+table td { vertical-align: middle; }
+table tr:hover { background:#f8fafc; }
 
-.remove{cursor:pointer;color:#94a3b8;font-size:18px}
-.remove:hover{color:#ef4444}
+.remove{ cursor:pointer; color:#94a3b8; font-size:18px; }
+.remove:hover{ color:#ef4444; }
 
 .kpi{
   display:flex;
   justify-content:space-between;
   align-items:center;
 }
+.kpi .value{ font-size:28px; font-weight:800; }
 
-.kpi .value{
-  font-size:28px;
-  font-weight:800;
+.sticky-remaining {
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
+#breakdownContent {
+  display:grid;
+  grid-template-columns: 1fr auto;
+  row-gap:6px;
+}
+.breakdown-line{ display: contents; }
+.breakdown-line span:last-child{ font-weight:600; }
+.breakdown-total{
+  margin-top:6px;
+  padding-top:6px;
+  border-top:1px solid var(--line);
+  font-weight:700;
+}
+
+/* lock only edits */
+.locked input,
+.locked select,
+.locked .remove,
+.locked #addIncome,
+.locked #addBill,
+.locked #addDebt,
+.locked .debt-remove{
+  pointer-events:none;
+  opacity:.6;
+}
+
+/* debug */
+#debug{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:8px;
+}
+#debug strong{ color:var(--text); }
+
+/* Debt cards */
 .debt-card{
   border:1px solid var(--line);
   border-radius:14px;
   padding:14px;
   margin-bottom:12px;
+  background:#fff;
+  box-shadow:0 4px 12px rgba(0,0,0,.04);
 }
-
+.debt-title input{
+  width:100%;
+  font-weight:700;
+  font-size:16px;
+  margin-bottom:10px;
+}
 .debt-field{
   display:flex;
   justify-content:space-between;
+  align-items:center;
   margin-bottom:8px;
+  gap:12px;
 }
-
-.debt-field label{color:var(--muted)}
-
+.debt-field label{
+  font-size:13px;
+  color:var(--muted);
+}
+.debt-field input{
+  max-width:140px;
+  text-align:right;
+}
 .debt-results{
-  border-top:1px dashed var(--line);
   margin-top:10px;
   padding-top:10px;
+  border-top:1px dashed var(--line);
   font-size:13px;
 }
+.debt-results div{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:4px;
+  font-weight:600;
+}
+.debt-remove{
+  margin-top:10px;
+  background:#e5e7eb;
+  color:#334155;
+}
 
-@media(max-width:480px){
-  .row{grid-template-columns:1fr}
+/* Mobile stacked table cards */
+@media (max-width:480px){
+  .row{ grid-template-columns:1fr; }
+}
+
+@media (max-width: 430px) {
+  thead { display:none; }
+
+  tbody tr{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:12px;
+    margin-bottom:12px;
+    box-shadow:0 4px 12px rgba(0,0,0,.04);
+    display:block;
+  }
+
+  tbody td{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    padding:6px 0;
+    border:none;
+  }
+
+  tbody td::before{
+    content: attr(data-label);
+    color:#0f172a;
+    font-weight:700;
+    font-size:13px;
+    opacity:1;
+  }
+
+  tbody td input{
+    width:100%;
+    max-width:140px;
+    text-align:right;
+  }
 }
 </style>
 </head>
@@ -109,179 +234,480 @@ th{font-size:12px;color:var(--muted)}
 <body>
 <div class="wrap" id="app">
 
-<div class="card">
-  <div class="row">
-    <select id="month"></select>
-    <select id="year"></select>
+  <!-- HEADER -->
+  <div class="card">
+    <div class="row">
+      <select id="month"></select>
+      <select id="year"></select>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+      <input id="startingBalance" type="number" placeholder="Starting balance" inputmode="decimal" />
+      <button id="lockBtn" class="secondary" type="button">🔓 Lock Month</button>
+    </div>
+
+    <div id="debug">Status: <strong>loading…</strong></div>
   </div>
-  <div class="row" style="margin-top:10px">
-    <input id="startingBalance" type="number" placeholder="Starting balance">
-    <button id="lockBtn" class="secondary">🔓 Lock Month</button>
+
+  <!-- REMAINING -->
+  <div class="card sticky-remaining">
+    <div class="kpi">
+      <div>Remaining This Month</div>
+      <div class="value" id="remaining">$0.00</div>
+    </div>
+
+    <div class="card" id="breakdown" style="font-size:14px;color:#475569;margin-top:12px;">
+      <div id="breakdownContent"></div>
+    </div>
   </div>
-</div>
 
-<div class="card">
-  <div class="kpi">
-    <div>Remaining This Month</div>
-    <div class="value" id="remaining">$0.00</div>
+  <div class="card" id="summary" style="font-size:14px;color:#475569;"></div>
+
+  <!-- INCOME -->
+  <div class="card">
+    <div class="section-header" onclick="toggleSection(this)">
+      <h2>Income</h2>
+      <span class="section-toggle">Hide</span>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Source</th>
+          <th>Amount</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="income"></tbody>
+    </table>
+    <button id="addIncome" type="button">+ Add Income</button>
   </div>
-</div>
 
-<div class="card">
-  <h2>Income</h2>
-  <table>
-    <thead>
-      <tr><th>Date</th><th>Source</th><th>Amount</th><th></th></tr>
-    </thead>
-    <tbody id="income"></tbody>
-  </table>
-  <button id="addIncome">+ Add Income</button>
-</div>
+  <!-- BILLS -->
+  <div class="card">
+    <div class="section-header" onclick="toggleSection(this)">
+      <h2>Bills</h2>
+      <span class="section-toggle">Hide</span>
+    </div>
 
-<div class="card">
-  <h2>Bills</h2>
-  <table>
-    <thead>
-      <tr><th>✔</th><th>Due</th><th>Paid</th><th>Name</th><th>Amount</th><th></th></tr>
-    </thead>
-    <tbody id="bills"></tbody>
-  </table>
-  <button id="addBill">+ Add Bill</button>
-</div>
+    <table>
+      <thead>
+        <tr>
+          <th>✔</th>
+          <th>Due</th>
+          <th>Paid</th>
+          <th>Name</th>
+          <th>Amount</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="bills"></tbody>
+    </table>
+    <button id="addBill" type="button">+ Add Bill</button>
+  </div>
 
-<div class="card">
-  <h2>Debt</h2>
-  <div id="debt"></div>
-  <button id="addDebt">+ Add Debt</button>
-</div>
+  <!-- DEBT -->
+  <div class="card">
+    <div class="section-header" onclick="toggleSection(this)">
+      <h2>Debt</h2>
+      <span class="section-toggle">Hide</span>
+    </div>
+
+    <div id="debt"></div>
+    <button id="addDebt" type="button">+ Add Debt</button>
+  </div>
 
 </div>
 
 <script>
+/* ========= STABLE CORE ========= */
 const $ = id => document.getElementById(id);
-const money = n => `$${(Number(n)||0).toFixed(2)}`;
+const money = n => `$${(Number(n) || 0).toFixed(2)}`;
 
-const incomeT = $("income");
-const billsT = $("bills");
-const debtT = $("debt");
-const remainingEl = $("remaining");
-const startBal = $("startingBalance");
+const app      = $("app");
+const debugEl  = $("debug");
+
 const monthSel = $("month");
-const yearSel = $("year");
+const yearSel  = $("year");
+const startBal = $("startingBalance");
+
+const incomeT  = $("income");
+const billsT   = $("bills");
+const debtT    = $("debt");
+
+const remaining = $("remaining");
+const lockBtn   = $("lockBtn");
 
 let locked = false;
+let lastKey = ""; // tracks the month currently loaded (so we can save it before switching)
+
+function setDebug(msg){
+  debugEl.innerHTML = `Status: <strong>${msg}</strong>`;
+}
 
 /* Month / Year */
-(() => {
+(function initMonthYear(){
   const now = new Date();
-  for(let i=0;i<12;i++)
-    monthSel.add(new Option(new Date(0,i).toLocaleString("default",{month:"long"}),i));
-  for(let y=2024;y<2036;y++)
-    yearSel.add(new Option(y,y));
+  for(let i=0;i<12;i++){
+    monthSel.add(new Option(new Date(0,i).toLocaleString("default",{month:"long"}), i));
+  }
+  for(let y=2024;y<2036;y++){
+    yearSel.add(new Option(y, y));
+  }
   monthSel.value = now.getMonth();
-  yearSel.value = now.getFullYear();
+  yearSel.value  = now.getFullYear();
 })();
 
-/* Helpers */
-function addRow(table, html){
+function key(){
+  return `stable-${yearSel.value}-${monthSel.value}`;
+}
+
+function toggleSection(header){
+  const card = header.closest(".card");
+  const label = header.querySelector(".section-toggle");
+
+  card.classList.toggle("collapsed");
+  label.textContent = card.classList.contains("collapsed") ? "Show" : "Hide";
+}
+
+/* ===== Data getters ===== */
+function getIncomeData(){
+  return [...incomeT.querySelectorAll("tr")].map(r => ({
+    date:   r.querySelector('td[data-label="Date"] input')?.value || "",
+    source: r.querySelector('td[data-label="Source"] input')?.value || "",
+    amount: r.querySelector('td[data-label="Amount"] input')?.value || ""
+  }));
+}
+
+function getBillsData(){
+  return [...billsT.querySelectorAll("tr")].map(r => ({
+    paid:     !!r.querySelector('td[data-label="Paid"] input')?.checked,
+    dueDate:  r.querySelector('td[data-label="Due Date"] input')?.value || "",
+    paidDate: r.querySelector('td[data-label="Paid Date"] input')?.value || "",
+    name:     r.querySelector('td[data-label="Name"] input')?.value || "",
+    amount:   r.querySelector('td[data-label="Amount"] input')?.value || ""
+  }));
+}
+
+function getDebtData(){
+  return [...debtT.querySelectorAll(".debt-card")].map(card=>{
+    const i = card.querySelectorAll("input");
+    return {
+      name:    i[0]?.value || "",
+      balance: i[1]?.value || "",
+      apr:     i[2]?.value || "",
+      payment: i[3]?.value || "",
+      extra:   i[4]?.value || ""
+    };
+  });
+}
+
+function clear(el){ el.innerHTML = ""; }
+
+/* ===== Row builders ===== */
+function addRow(tableBody, cellsHtml){
   const tr = document.createElement("tr");
-  tr.innerHTML = html + `<td><span class="remove">×</span></td>`;
-  tr.querySelector(".remove").onclick = () => { if(!locked){ tr.remove(); update(); }};
-  tr.querySelectorAll("input").forEach(i=>{
-    i.addEventListener("input",update);
-    i.addEventListener("change",update);
+  tr.innerHTML = cellsHtml + `<td><span class="remove" title="Remove">×</span></td>`;
+
+  tr.querySelector(".remove").addEventListener("click", () => {
+    if(locked) return;
+    tr.remove();
+    update();
   });
 
-  const paid = tr.querySelector('input[type="checkbox"]');
-  const paidDate = tr.querySelector('td:nth-child(3) input');
+  // wire inputs
+  tr.querySelectorAll("input").forEach(input => {
+    input.addEventListener("input", update);
+    input.addEventListener("change", update);
+  });
+
+  // bills: paid checkbox controls paid date
+  const paid = tr.querySelector('td[data-label="Paid"] input');
+  const paidDate = tr.querySelector('td[data-label="Paid Date"] input');
+
   if(paid && paidDate){
-    paid.addEventListener("change",()=>{
-      paidDate.disabled = !paid.checked;
-      if(paid.checked && !paidDate.value)
-        paidDate.value = new Date().toISOString().slice(0,10);
+    const syncPaidDate = () => {
+      if(paid.checked){
+        paidDate.disabled = false;
+        if(!paidDate.value){
+          paidDate.value = new Date().toISOString().slice(0,10);
+        }
+      } else {
+        paidDate.value = "";
+        paidDate.disabled = true;
+      }
+    };
+
+    // initial state (important when loading)
+    syncPaidDate();
+
+    paid.addEventListener("change", () => {
+      syncPaidDate();
+      update();
     });
   }
 
-  table.appendChild(tr);
+  tableBody.appendChild(tr);
   update();
 }
 
-/* Buttons */
-$("addIncome").onclick = ()=>addRow(incomeT,
-  `<td><input type="date"></td>
-   <td><input></td>
-   <td><input type="number" inputmode="decimal"></td>`
-);
-
-$("addBill").onclick = ()=>addRow(billsT,
-  `<td><input type="checkbox"></td>
-   <td><input type="date"></td>
-   <td><input type="date" disabled></td>
-   <td><input></td>
-   <td><input type="number" inputmode="decimal"></td>`
-);
-
-$("addDebt").onclick = ()=>{
+function createDebtCard(data = {}){
   const card = document.createElement("div");
-  card.className="debt-card";
-  card.innerHTML=`
-    <div class="debt-field"><label>Name</label><input></div>
-    <div class="debt-field"><label>Balance</label><input type="number" inputmode="decimal"></div>
-    <div class="debt-field"><label>APR %</label><input type="number" inputmode="decimal"></div>
-    <div class="debt-field"><label>Payment</label><input type="number" inputmode="decimal"></div>
-    <div class="debt-field"><label>Extra</label><input type="number" inputmode="decimal"></div>
-    <div class="debt-results">
-      <div>Interest: <span class="interest">$0.00</span></div>
-      <div>Principal: <span class="principal">$0.00</span></div>
-    </div>
-    <button>Remove</button>
-  `;
-  card.querySelector("button").onclick=()=>{card.remove();update()};
-  card.querySelectorAll("input").forEach(i=>i.addEventListener("input",update));
-  debtT.appendChild(card);
-};
+  card.className = "debt-card";
 
-/* Math */
-function sumIncome(){
-  let t=0;
-  incomeT.querySelectorAll("tr").forEach(r=>{
-    t+=Number(r.children[2].querySelector("input").value)||0;
+  card.innerHTML = `
+    <div class="debt-title">
+      <input placeholder="Debt name" value="${data.name || ""}">
+    </div>
+
+    <div class="debt-field">
+      <label>Balance</label>
+      <input type="number" inputmode="decimal" value="${data.balance || ""}">
+    </div>
+
+    <div class="debt-field">
+      <label>APR %</label>
+      <input type="number" inputmode="decimal" value="${data.apr || ""}">
+    </div>
+
+    <div class="debt-field">
+      <label>Payment</label>
+      <input type="number" inputmode="decimal" value="${data.payment || ""}">
+    </div>
+
+    <div class="debt-field">
+      <label>Extra</label>
+      <input type="number" inputmode="decimal" value="${data.extra || ""}">
+    </div>
+
+    <div class="debt-results">
+      <div><span>Interest</span><span class="interest">$0.00</span></div>
+      <div><span>Principal</span><span class="principal">$0.00</span></div>
+      <div><span>New Balance</span><span class="newbal">$0.00</span></div>
+    </div>
+
+    <button class="debt-remove" type="button">Remove Debt</button>
+  `;
+
+  card.querySelector(".debt-remove").addEventListener("click", () => {
+    if(locked) return;
+    card.remove();
+    update();
   });
-  return t;
+
+  card.querySelectorAll("input").forEach(i => i.addEventListener("input", update));
+
+  debtT.appendChild(card);
+  update();
+}
+
+/* ===== Loaders ===== */
+function loadIncomeRows(data=[]){
+  data.forEach(row => {
+    addRow(incomeT, `
+      <td data-label="Date"><input type="date" value="${row.date || ""}"></td>
+      <td data-label="Source"><input value="${row.source || ""}"></td>
+      <td data-label="Amount"><input type="number" inputmode="decimal" value="${row.amount || ""}"></td>
+    `);
+  });
+}
+
+function loadBillRows(data=[]){
+  data.forEach(row => {
+    addRow(billsT, `
+      <td data-label="Paid"><input type="checkbox" ${row.paid ? "checked" : ""}></td>
+      <td data-label="Due Date"><input type="date" value="${row.dueDate || ""}"></td>
+      <td data-label="Paid Date"><input type="date" value="${row.paidDate || ""}"></td>
+      <td data-label="Name"><input value="${row.name || ""}"></td>
+      <td data-label="Amount"><input type="number" inputmode="decimal" value="${row.amount || ""}"></td>
+    `);
+  });
+}
+
+function loadDebtRows(data=[]){
+  data.forEach(d => createDebtCard(d));
+}
+
+/* ===== Calculations ===== */
+function sumIncome(){
+  let total = 0;
+  incomeT.querySelectorAll("tr").forEach(r=>{
+    const amt = Number(r.querySelector('td[data-label="Amount"] input')?.value) || 0;
+    total += amt;
+  });
+  return total;
 }
 
 function sumBills(){
-  let t=0;
+  let total = 0;
+
   billsT.querySelectorAll("tr").forEach(r=>{
-    t+=Number(r.children[4].querySelector("input").value)||0;
+    const amt = Number(r.querySelector('td[data-label="Amount"] input')?.value) || 0;
+    total += amt;
+
+    // visual only
+    const paid = r.querySelector('td[data-label="Paid"] input')?.checked;
+    r.style.opacity = paid ? 0.45 : 1;
   });
-  return t;
+
+  return total;
 }
 
-function sumDebt(){
-  let t=0;
-  debtT.querySelectorAll(".debt-card").forEach(c=>{
-    const bal=+c.children[1].querySelector("input").value||0;
-    const apr=+c.children[2].querySelector("input").value||0;
-    const pay=+c.children[3].querySelector("input").value||0;
-    const extra=+c.children[4].querySelector("input").value||0;
-    const interest=bal*(apr/100/12);
-    const principal=Math.max(pay-interest,0)+extra;
-    c.querySelector(".interest").textContent=money(interest);
-    c.querySelector(".principal").textContent=money(principal);
-    t+=pay+extra;
+function calcDebtOut(){
+  let total = 0;
+
+  debtT.querySelectorAll(".debt-card").forEach(card=>{
+    const inputs = card.querySelectorAll("input");
+
+    const bal   = Number(inputs[1]?.value) || 0;
+    const apr   = Number(inputs[2]?.value) || 0;
+    const pay   = Number(inputs[3]?.value) || 0;
+    const extra = Number(inputs[4]?.value) || 0;
+
+    const interest  = bal * (apr / 100 / 12);
+    const principal = Math.max(pay - interest, 0) + extra;
+    const newBal    = Math.max(bal - principal, 0);
+
+    card.querySelector(".interest").textContent  = money(interest);
+    card.querySelector(".principal").textContent = money(principal);
+    card.querySelector(".newbal").textContent    = money(newBal);
+
+    total += pay + extra;
   });
-  return t;
+
+  return total;
+}
+
+function renderBreakdown(start, income, bills, debt, remainingValue){
+  const box = $("breakdownContent");
+  box.innerHTML = `
+    <div class="breakdown-line">
+      <span>Starting Balance</span>
+      <span>${money(start)}</span>
+    </div>
+    <div class="breakdown-line">
+      <span>Income</span>
+      <span style="color:#16a34a">+${money(income)}</span>
+    </div>
+    <div class="breakdown-line">
+      <span>Bills</span>
+      <span style="color:#dc2626">−${money(bills)}</span>
+    </div>
+    <div class="breakdown-line">
+      <span>Debt Payments</span>
+      <span style="color:#dc2626">−${money(debt)}</span>
+    </div>
+    <div class="breakdown-line breakdown-total">
+      <span>Remaining</span>
+      <span>${money(remainingValue)}</span>
+    </div>
+  `;
 }
 
 function update(){
-  const start=+startBal.value||0;
-  const rem=start+sumIncome()-sumBills()-sumDebt();
-  remainingEl.textContent=money(rem);
+  const start  = Number(startBal.value) || 0;
+  const income = sumIncome();
+  const bills  = sumBills();
+  const debt   = calcDebtOut();
+
+  const remainingValue = start + income - bills - debt;
+  remaining.textContent = money(remainingValue);
+
+  renderBreakdown(start, income, bills, debt, remainingValue);
+
+  $("summary").textContent = "Monthly activity updated.";
+  save();
 }
 
-startBal.addEventListener("input",update);
-update();
+/* ===== Save / Load (month switching safe) ===== */
+function save(){
+  if(!lastKey) lastKey = key();
+  localStorage.setItem(lastKey, JSON.stringify({
+    locked,
+    start: startBal.value || "",
+    income: getIncomeData(),
+    bills: getBillsData(),
+    debt: getDebtData()
+  }));
+}
+
+function load(){
+  lastKey = key(); // update what "current month" means
+
+  const d = JSON.parse(localStorage.getItem(lastKey) || "{}");
+
+  locked = !!d.locked;
+  app.classList.toggle("locked", locked);
+  lockBtn.textContent = locked ? "🔒 Month Locked" : "🔓 Lock Month";
+
+  startBal.value = d.start || "";
+
+  clear(incomeT);
+  clear(billsT);
+  clear(debtT);
+
+  loadIncomeRows(d.income || []);
+  loadBillRows(d.bills || []);
+  loadDebtRows(d.debt || []);
+
+  update();
+  setDebug(`Loaded ${yearSel.value}-${Number(monthSel.value)+1} ✅`);
+}
+
+/* ===== Events ===== */
+startBal.addEventListener("input", update);
+startBal.addEventListener("change", update);
+
+$("addIncome").addEventListener("click", () => {
+  setDebug("Add Income clicked ✅");
+  if(locked) return;
+  addRow(incomeT, `
+    <td data-label="Date"><input type="date"></td>
+    <td data-label="Source"><input></td>
+    <td data-label="Amount"><input type="number" inputmode="decimal"></td>
+  `);
+});
+
+$("addBill").addEventListener("click", () => {
+  setDebug("Add Bill clicked ✅");
+  if(locked) return;
+  addRow(billsT, `
+    <td data-label="Paid"><input type="checkbox"></td>
+    <td data-label="Due Date"><input type="date"></td>
+    <td data-label="Paid Date"><input type="date" disabled></td>
+    <td data-label="Name"><input></td>
+    <td data-label="Amount"><input type="number" inputmode="decimal"></td>
+  `);
+});
+
+$("addDebt").addEventListener("click", () => {
+  setDebug("Add Debt clicked ✅");
+  if(locked) return;
+  createDebtCard();
+});
+
+lockBtn.addEventListener("click", () => {
+  locked = !locked;
+  app.classList.toggle("locked", locked);
+  lockBtn.textContent = locked ? "🔒 Month Locked" : "🔓 Lock Month";
+  save();
+  setDebug(locked ? "Month locked ✅" : "Month unlocked ✅");
+});
+
+function handleMonthChange(){
+  // Save the month we were on (lastKey) before switching
+  save();
+
+  // Load newly selected month
+  load();
+}
+
+monthSel.addEventListener("change", handleMonthChange);
+yearSel.addEventListener("change", handleMonthChange);
+
+/* Boot */
+load();
 </script>
 </body>
 </html>
