@@ -567,6 +567,24 @@ function addRow(table, cellsHtml){
   tr.querySelectorAll("input").forEach(i => {
     i.addEventListener("input", update);
     i.addEventListener("change", update);
+
+const paid = tr.querySelector('td[data-label="Paid"] input');
+const paidDate = tr.querySelector('td[data-label="Paid Date"] input');
+
+if(paid && paidDate){
+  paid.addEventListener("change", () => {
+    if(paid.checked){
+      paidDate.disabled = false;
+      if(!paidDate.value){
+        paidDate.value = new Date().toISOString().slice(0,10);
+      }
+    } else {
+      paidDate.value = "";
+      paidDate.disabled = true;
+    }
+    update();
+  });
+}
   });
 
     <div class="breakdown-line">
@@ -656,6 +674,13 @@ $("addBill").addEventListener("click", () => {
       <input type="number" inputmode="decimal">
     </td>
   `);
+});
+
+$("addDebt").addEventListener("click", () => {
+  setDebug("Add Debt clicked ✅");
+  if(locked) return;
+  createDebtCard();
+  update();
 });
 
 function createDebtCard(data = {}){
