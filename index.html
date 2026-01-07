@@ -543,7 +543,7 @@ function loadBillRows(data=[]){
       <td data-label="Name"><input value="${row.name || ""}"></td>
       <td data-label="Amount"><input type="number" inputmode="decimal" value="${row.amount || ""}"></td>
     `);
- 
+  });
 }
 
 function loadDebtRows(data=[]){
@@ -586,13 +586,7 @@ function addRow(table, cellsHtml){
 
   table.appendChild(tr);
   update();
-}
-  });
 
-    <div class="breakdown-line">
-      <span>Income</span>
-      <span style="color:#16a34a">+${money(income)}</span>
-    </div>
 
     <div class="breakdown-line">
       <span>Bills</span>
@@ -865,10 +859,6 @@ function renderBreakdown(start, income, bills, debt, remainingValue){
     <div class="breakdown-line">
       <span>Starting Balance</span>
       <span>${money(start)}</span>
-    </div>
-    <div class="breakdown-line">
-      <span>Income</span>
-      <span style="color:#16a34a">+${money(income)}</span>
     </div>
     <div class="breakdown-line">
       <span>Bills</span>
