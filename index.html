@@ -543,7 +543,7 @@ function loadBillRows(data=[]){
       <td data-label="Name"><input value="${row.name || ""}"></td>
       <td data-label="Amount"><input type="number" inputmode="decimal" value="${row.amount || ""}"></td>
     `);
-  });
+ 
 }
 
 function loadDebtRows(data=[]){
@@ -560,7 +560,7 @@ function addRow(table, cellsHtml){
     tr.remove();
     update();
   
-
+});
   tr.querySelectorAll("input").forEach(input => {
     input.addEventListener("input", update);
     input.addEventListener("change", update);
