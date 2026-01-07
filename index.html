@@ -724,11 +724,17 @@ lockBtn.addEventListener("click", () => {
 
 /* Calculate */
 function sumIncome(){
-  let t = 0;
-  incomeT.querySelectorAll("tr").forEach(r=>{
-    t += Number(r.children[1].querySelector("input")?.value) || 0;
+  let total = 0;
+
+  incomeT.querySelectorAll("tr").forEach(row=>{
+    const amt = Number(
+      row.querySelector('td[data-label="Amount"] input')?.value
+    ) || 0;
+
+    total += amt;
   });
-  return t;
+
+  return total;
 }
 
 function sumBills(){
