@@ -347,6 +347,14 @@ function setDebug(msg){
   debugEl.innerHTML = `Status: <strong>${msg}</strong>`;
 }
 
+function getBillTemplates(){
+  return JSON.parse(localStorage.getItem("bill-templates") || "[]");
+}
+
+function saveBillTemplates(templates){
+  localStorage.setItem("bill-templates", JSON.stringify(templates));
+}
+
 /* Month / Year */
 (function initMonthYear(){
   const now = new Date();
@@ -382,12 +390,13 @@ function getIncomeData(){
 }
 
 function getBillsData(){
-  return [...billsT.querySelectorAll("tr")].map(r => ({
-    paid:     !!r.querySelector('td[data-label="Paid"] input')?.checked,
-    dueDate:  r.querySelector('td[data-label="Due Date"] input')?.value || "",
-    paidDate: r.querySelector('td[data-label="Paid Date"] input')?.value || "",
-    name:     r.querySelector('td[data-label="Name"] input')?.value || "",
-    amount:   r.querySelector('td[data-label="Amount"] input')?.value || ""
+  return [...billsT.children].map(r => ({
+    templateId: r.dataset.templateId || null,
+    paid: r.querySelector('[data-label="Paid"] input').checked,
+    dueDate: r.querySelector('[data-label="Due Date"] input').value,
+    paidDate: r.querySelector('[data-label="Paid Date"] input').value,
+    name: r.querySelector('[data-label="Name"] input').value,
+    amount: r.querySelector('[data-label="Amount"] input').value
   }));
 }
 
@@ -407,9 +416,12 @@ function getDebtData(){
 function clear(el){ el.innerHTML = ""; }
 
 /* ===== Row builders ===== */
-function addRow(tableBody, cellsHtml){
+function addRow(table, cellsHtml, templateId = null){
   const tr = document.createElement("tr");
-  tr.innerHTML = cellsHtml + `<td><span class="remove" title="Remove">×</span></td>`;
+  tr.dataset.templateId = templateId || "";
+  tr.innerHTML = cellsHtml + `<td><span class="remove">×</span></td>`;
+  ...
+}
 
   tr.querySelector(".remove").addEventListener("click", () => {
     if(locked) return;
@@ -524,6 +536,27 @@ function loadBillRows(data=[]){
       <td data-label="Amount"><input type="number" inputmode="decimal" value="${row.amount || ""}"></td>
     `);
   });
+
+const templates = getBillTemplates();
+const existingTemplateIds = new Set(
+  [...billsT.children].map(r => r.dataset.templateId).filter(Boolean)
+);
+
+templates.forEach(t => {
+  if(!t.recurring) return;
+  if(existingTemplateIds.has(t.id)) return;
+
+  const due = new Date(yearSel.value, monthSel.value, t.dueDay)
+    .toISOString().slice(0,10);
+
+  addRow(billsT, `
+    <td data-label="Paid"><input type="checkbox"></td>
+    <td data-label="Due Date"><input type="date" value="${due}"></td>
+    <td data-label="Paid Date"><input type="date" disabled></td>
+    <td data-label="Name"><input value="${t.name}"></td>
+    <td data-label="Amount"><input type="number" inputmode="decimal" value="${t.amount}"></td>
+  `, t.id);
+});
 }
 
 function loadDebtRows(data=[]){
