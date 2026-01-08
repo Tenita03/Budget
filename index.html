@@ -639,7 +639,9 @@ function update(){
 
 /* ===== Save / Load ===== */
 function save(){
-  localStorage.setItem(key(), JSON.stringify({
+  if(!lastKey) lastKey = key();
+
+  localStorage.setItem(lastKey, JSON.stringify({
     locked,
     start: startBal.value || "",
     income: getIncomeData(),
@@ -649,9 +651,13 @@ function save(){
 }
 
 function load(){
-  const d = JSON.parse(localStorage.getItem(key()) || "{}");
+  lastKey = key(); // this month is now active
 
+  const d = JSON.parse(localStorage.getItem(lastKey) || "{}");
+
+  // 🔑 LOCK IS READ ONLY FROM THIS MONTH
   locked = !!d.locked;
+
   app.classList.toggle("locked", locked);
   lockBtn.textContent = locked ? "🔒 Month Locked" : "🔓 Lock Month";
 
@@ -666,8 +672,7 @@ function load(){
   loadDebtRows(d.debt || []);
 
   update();
-  renderTemplatesUI();
-  setDebug(`Loaded ${yearSel.value}-${Number(monthSel.value)+1} ✅`);
+  setDebug(`Loaded ${yearSel.value}-${Number(monthSel.value) + 1} ✅`);
 }
 
 /* ===== Recurring bill templates UI ===== */
