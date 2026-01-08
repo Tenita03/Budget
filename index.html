@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Paycheck Tracker – Stable Base</title>
+<title>Paycheck Tracker – Stable Base (Recurring Bills)</title>
 
 <style>
 :root{
@@ -16,22 +16,14 @@
   --radius:16px;
   --shadow:0 10px 30px rgba(0,0,0,.06);
 }
-
 *{ box-sizing:border-box; }
-
 body{
   margin:0;
   background:var(--bg);
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
   color:var(--text);
 }
-
-.wrap{
-  max-width:900px;
-  margin:auto;
-  padding:16px;
-}
-
+.wrap{ max-width:900px; margin:auto; padding:16px; }
 .card{
   background:var(--card);
   border-radius:var(--radius);
@@ -39,30 +31,23 @@ body{
   padding:16px;
   margin-bottom:16px;
 }
-
 h2{ margin:0 0 12px; font-size:18px; }
-
 .row{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:12px;
 }
-
-.section-header {
+.section-header{
   display:flex;
   justify-content:space-between;
   align-items:center;
   cursor:pointer;
 }
-
-.section-toggle {
-  font-size:13px;
-  color:var(--muted);
-}
-
+.section-toggle{ font-size:13px; color:var(--muted); }
 .collapsed table,
 .collapsed button,
-.collapsed #debt {
+.collapsed #debt,
+.collapsed .template-ui {
   display:none;
 }
 
@@ -72,7 +57,6 @@ input, select, button{
   border:1px solid var(--line);
   font-size:15px;
 }
-
 button{
   background:var(--brand);
   color:#fff;
@@ -84,33 +68,23 @@ button.secondary{ background:#94a3b8; }
 table{ width:100%; border-collapse:collapse; }
 th, td{ padding:8px; border-bottom:1px solid var(--line); text-align:left; }
 th{ font-size:12px; color:var(--muted); }
+table input{ background:#fafafa; }
+table tr:hover{ background:#f8fafc; }
 
-table input { background:#fafafa; }
-table td { vertical-align: middle; }
-table tr:hover { background:#f8fafc; }
-
-.remove{ cursor:pointer; color:#94a3b8; font-size:18px; }
+.remove{ cursor:pointer; color:#94a3b8; font-size:18px; user-select:none; }
 .remove:hover{ color:#ef4444; }
 
-.kpi{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
+.kpi{ display:flex; justify-content:space-between; align-items:center; }
 .kpi .value{ font-size:28px; font-weight:800; }
 
-.sticky-remaining {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
+.sticky-remaining{ position: sticky; top:0; z-index:10; }
 
-#breakdownContent {
+#breakdownContent{
   display:grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns:1fr auto;
   row-gap:6px;
 }
-.breakdown-line{ display: contents; }
+.breakdown-line{ display:contents; }
 .breakdown-line span:last-child{ font-weight:600; }
 .breakdown-total{
   margin-top:6px;
@@ -128,8 +102,8 @@ table tr:hover { background:#f8fafc; }
 .locked #addIncome,
 .locked #addBill,
 .locked #addDebt {
-  pointer-events: none;
-  opacity: .6;
+  pointer-events:none;
+  opacity:.6;
 }
 
 /* debug */
@@ -162,14 +136,8 @@ table tr:hover { background:#f8fafc; }
   margin-bottom:8px;
   gap:12px;
 }
-.debt-field label{
-  font-size:13px;
-  color:var(--muted);
-}
-.debt-field input{
-  max-width:140px;
-  text-align:right;
-}
+.debt-field label{ font-size:13px; color:var(--muted); }
+.debt-field input{ max-width:140px; text-align:right; }
 .debt-results{
   margin-top:10px;
   padding-top:10px;
@@ -188,9 +156,32 @@ table tr:hover { background:#f8fafc; }
   color:#334155;
 }
 
+/* Template UI */
+.template-ui{
+  border-top:1px solid var(--line);
+  padding-top:12px;
+  margin-top:12px;
+}
+.template-row{
+  display:grid;
+  grid-template-columns: 1.4fr 1fr .8fr .8fr auto;
+  gap:10px;
+  align-items:center;
+}
+.template-row input, .template-row select{
+  width:100%;
+}
+.template-row .remove{
+  font-size:20px;
+  padding:0 6px;
+}
+
 /* Mobile stacked table cards */
 @media (max-width:480px){
   .row{ grid-template-columns:1fr; }
+  .template-row{
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 @media (max-width: 430px) {
@@ -273,12 +264,7 @@ table tr:hover { background:#f8fafc; }
 
     <table>
       <thead>
-        <tr>
-          <th>Date</th>
-          <th>Source</th>
-          <th>Amount</th>
-          <th></th>
-        </tr>
+        <tr><th>Date</th><th>Source</th><th>Amount</th><th></th></tr>
       </thead>
       <tbody id="income"></tbody>
     </table>
@@ -294,18 +280,24 @@ table tr:hover { background:#f8fafc; }
 
     <table>
       <thead>
-        <tr>
-          <th>✔</th>
-          <th>Due</th>
-          <th>Paid</th>
-          <th>Name</th>
-          <th>Amount</th>
-          <th></th>
-        </tr>
+        <tr><th>✔</th><th>Due</th><th>Paid</th><th>Name</th><th>Amount</th><th></th></tr>
       </thead>
       <tbody id="bills"></tbody>
     </table>
+
     <button id="addBill" type="button">+ Add Bill</button>
+
+    <!-- Template manager -->
+    <div class="template-ui">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+        <div style="font-weight:700;">Recurring Bills</div>
+        <button id="addTemplate" type="button" class="secondary">+ Add Recurring Bill</button>
+      </div>
+      <div id="templates" style="margin-top:10px; display:grid; gap:10px;"></div>
+      <div style="font-size:12px; color:var(--muted); margin-top:10px;">
+        Recurring bills automatically appear in each month (once). You can still edit the due date/amount in a specific month without changing the template.
+      </div>
+    </div>
   </div>
 
   <!-- DEBT -->
@@ -322,7 +314,7 @@ table tr:hover { background:#f8fafc; }
 </div>
 
 <script>
-/* ========= STABLE CORE ========= */
+/* ========= STABLE CORE + RECURRING BILLS ========= */
 const $ = id => document.getElementById(id);
 const money = n => `$${(Number(n) || 0).toFixed(2)}`;
 
@@ -340,17 +332,19 @@ const debtT    = $("debt");
 const remaining = $("remaining");
 const lockBtn   = $("lockBtn");
 
+const templatesEl = $("templates");
+const addTemplateBtn = $("addTemplate");
+
 let locked = false;
-let lastKey = ""; // tracks the month currently loaded (so we can save it before switching)
 
 function setDebug(msg){
   debugEl.innerHTML = `Status: <strong>${msg}</strong>`;
 }
 
+/* ===== Templates (global) ===== */
 function getBillTemplates(){
   return JSON.parse(localStorage.getItem("bill-templates") || "[]");
 }
-
 function saveBillTemplates(templates){
   localStorage.setItem("bill-templates", JSON.stringify(templates));
 }
@@ -375,7 +369,6 @@ function key(){
 function toggleSection(header){
   const card = header.closest(".card");
   const label = header.querySelector(".section-toggle");
-
   card.classList.toggle("collapsed");
   label.textContent = card.classList.contains("collapsed") ? "Show" : "Hide";
 }
@@ -390,13 +383,13 @@ function getIncomeData(){
 }
 
 function getBillsData(){
-  return [...billsT.children].map(r => ({
+  return [...billsT.querySelectorAll("tr")].map(r => ({
     templateId: r.dataset.templateId || null,
-    paid: r.querySelector('[data-label="Paid"] input').checked,
-    dueDate: r.querySelector('[data-label="Due Date"] input').value,
-    paidDate: r.querySelector('[data-label="Paid Date"] input').value,
-    name: r.querySelector('[data-label="Name"] input').value,
-    amount: r.querySelector('[data-label="Amount"] input').value
+    paid: r.querySelector('[data-label="Paid"] input')?.checked || false,
+    dueDate: r.querySelector('[data-label="Due Date"] input')?.value || "",
+    paidDate: r.querySelector('[data-label="Paid Date"] input')?.value || "",
+    name: r.querySelector('[data-label="Name"] input')?.value || "",
+    amount: r.querySelector('[data-label="Amount"] input')?.value || ""
   }));
 }
 
@@ -415,13 +408,24 @@ function getDebtData(){
 
 function clear(el){ el.innerHTML = ""; }
 
-/* ===== Row builders ===== */
-function addRow(table, cellsHtml, templateId = null){
-  const tr = document.createElement("tr");
-  tr.dataset.templateId = templateId || "";
-  tr.innerHTML = cellsHtml + `<td><span class="remove">×</span></td>`;
-  ...
+/* ===== Helpers ===== */
+function clampDueDate(year, monthIndex, dueDay){
+  const y = Number(year);
+  const m = Number(monthIndex);
+  const d = Math.max(1, Number(dueDay) || 1);
+
+  // last day of month: day 0 of next month
+  const lastDay = new Date(y, m + 1, 0).getDate();
+  const dd = Math.min(d, lastDay);
+
+  return new Date(y, m, dd).toISOString().slice(0,10);
 }
+
+/* ===== Row builder (for income + bills) ===== */
+function addRow(tbody, cellsHtml, templateId = null){
+  const tr = document.createElement("tr");
+  tr.dataset.templateId = templateId ? String(templateId) : "";
+  tr.innerHTML = cellsHtml + `<td><span class="remove" title="Remove">×</span></td>`;
 
   tr.querySelector(".remove").addEventListener("click", () => {
     if(locked) return;
@@ -429,18 +433,18 @@ function addRow(table, cellsHtml, templateId = null){
     update();
   });
 
-  // wire inputs
+  // Wire all inputs
   tr.querySelectorAll("input").forEach(input => {
     input.addEventListener("input", update);
     input.addEventListener("change", update);
   });
 
-  // bills: paid checkbox controls paid date
+  // Bills: paid checkbox controls paid date
   const paid = tr.querySelector('td[data-label="Paid"] input');
   const paidDate = tr.querySelector('td[data-label="Paid Date"] input');
 
   if(paid && paidDate){
-    const syncPaidDate = () => {
+    const sync = () => {
       if(paid.checked){
         paidDate.disabled = false;
         if(!paidDate.value){
@@ -451,20 +455,14 @@ function addRow(table, cellsHtml, templateId = null){
         paidDate.disabled = true;
       }
     };
-
-    // initial state (important when loading)
-    syncPaidDate();
-
-    paid.addEventListener("change", () => {
-      syncPaidDate();
-      update();
-    });
+    sync(); // important on load
+    paid.addEventListener("change", () => { sync(); update(); });
   }
 
-  tableBody.appendChild(tr);
-  update();
+  tbody.appendChild(tr);
 }
 
+/* ===== Debt cards ===== */
 function createDebtCard(data = {}){
   const card = document.createElement("div");
   card.className = "debt-card";
@@ -512,7 +510,6 @@ function createDebtCard(data = {}){
   card.querySelectorAll("input").forEach(i => i.addEventListener("input", update));
 
   debtT.appendChild(card);
-  update();
 }
 
 /* ===== Loaders ===== */
@@ -534,29 +531,31 @@ function loadBillRows(data=[]){
       <td data-label="Paid Date"><input type="date" value="${row.paidDate || ""}"></td>
       <td data-label="Name"><input value="${row.name || ""}"></td>
       <td data-label="Amount"><input type="number" inputmode="decimal" value="${row.amount || ""}"></td>
-    `);
+    `, row.templateId || null);
   });
 
-const templates = getBillTemplates();
-const existingTemplateIds = new Set(
-  [...billsT.children].map(r => r.dataset.templateId).filter(Boolean)
-);
+  // Auto-inject recurring templates (once per month)
+  const templates = getBillTemplates();
+  const existingTemplateIds = new Set(
+    [...billsT.querySelectorAll("tr")]
+      .map(r => r.dataset.templateId)
+      .filter(Boolean)
+  );
 
-templates.forEach(t => {
-  if(!t.recurring) return;
-  if(existingTemplateIds.has(t.id)) return;
+  templates.forEach(t => {
+    if(!t.recurring) return;
+    if(existingTemplateIds.has(String(t.id))) return;
 
-  const due = new Date(yearSel.value, monthSel.value, t.dueDay)
-    .toISOString().slice(0,10);
+    const due = clampDueDate(yearSel.value, monthSel.value, t.dueDay);
 
-  addRow(billsT, `
-    <td data-label="Paid"><input type="checkbox"></td>
-    <td data-label="Due Date"><input type="date" value="${due}"></td>
-    <td data-label="Paid Date"><input type="date" disabled></td>
-    <td data-label="Name"><input value="${t.name}"></td>
-    <td data-label="Amount"><input type="number" inputmode="decimal" value="${t.amount}"></td>
-  `, t.id);
-});
+    addRow(billsT, `
+      <td data-label="Paid"><input type="checkbox"></td>
+      <td data-label="Due Date"><input type="date" value="${due}"></td>
+      <td data-label="Paid Date"><input type="date" disabled></td>
+      <td data-label="Name"><input value="${t.name || ""}"></td>
+      <td data-label="Amount"><input type="number" inputmode="decimal" value="${t.amount || ""}"></td>
+    `, t.id);
+  });
 }
 
 function loadDebtRows(data=[]){
@@ -614,28 +613,12 @@ function calcDebtOut(){
 }
 
 function renderBreakdown(start, income, bills, debt, remainingValue){
-  const box = $("breakdownContent");
-  box.innerHTML = `
-    <div class="breakdown-line">
-      <span>Starting Balance</span>
-      <span>${money(start)}</span>
-    </div>
-    <div class="breakdown-line">
-      <span>Income</span>
-      <span style="color:#16a34a">+${money(income)}</span>
-    </div>
-    <div class="breakdown-line">
-      <span>Bills</span>
-      <span style="color:#dc2626">−${money(bills)}</span>
-    </div>
-    <div class="breakdown-line">
-      <span>Debt Payments</span>
-      <span style="color:#dc2626">−${money(debt)}</span>
-    </div>
-    <div class="breakdown-line breakdown-total">
-      <span>Remaining</span>
-      <span>${money(remainingValue)}</span>
-    </div>
+  $("breakdownContent").innerHTML = `
+    <div class="breakdown-line"><span>Starting Balance</span><span>${money(start)}</span></div>
+    <div class="breakdown-line"><span>Income</span><span style="color:#16a34a">+${money(income)}</span></div>
+    <div class="breakdown-line"><span>Bills</span><span style="color:#dc2626">−${money(bills)}</span></div>
+    <div class="breakdown-line"><span>Debt Payments</span><span style="color:#dc2626">−${money(debt)}</span></div>
+    <div class="breakdown-line breakdown-total"><span>Remaining</span><span>${money(remainingValue)}</span></div>
   `;
 }
 
@@ -654,10 +637,9 @@ function update(){
   save();
 }
 
-/* ===== Save / Load (month switching safe) ===== */
+/* ===== Save / Load ===== */
 function save(){
-  if(!lastKey) lastKey = key();
-  localStorage.setItem(lastKey, JSON.stringify({
+  localStorage.setItem(key(), JSON.stringify({
     locked,
     start: startBal.value || "",
     income: getIncomeData(),
@@ -667,13 +649,7 @@ function save(){
 }
 
 function load(){
-  lastKey = key(); // update what "current month" means
-
-  const d = JSON.parse(localStorage.getItem(lastKey) || "{}");
-
-if (!localStorage.getItem(key())) {
-  locked = false;
-}
+  const d = JSON.parse(localStorage.getItem(key()) || "{}");
 
   locked = !!d.locked;
   app.classList.toggle("locked", locked);
@@ -690,8 +666,81 @@ if (!localStorage.getItem(key())) {
   loadDebtRows(d.debt || []);
 
   update();
+  renderTemplatesUI();
   setDebug(`Loaded ${yearSel.value}-${Number(monthSel.value)+1} ✅`);
 }
+
+/* ===== Recurring bill templates UI ===== */
+function uid(){
+  return "t_" + Math.random().toString(36).slice(2, 10);
+}
+
+function renderTemplatesUI(){
+  const templates = getBillTemplates();
+
+  templatesEl.innerHTML = "";
+  if(templates.length === 0){
+    templatesEl.innerHTML = `<div style="color:var(--muted); font-size:13px;">No recurring bills yet.</div>`;
+    return;
+  }
+
+  templates.forEach(t => {
+    const row = document.createElement("div");
+    row.className = "template-row";
+    row.innerHTML = `
+      <input data-k="name" placeholder="Name (e.g., Rent)" value="${t.name || ""}">
+      <input data-k="amount" type="number" inputmode="decimal" placeholder="Amount" value="${t.amount ?? ""}">
+      <input data-k="dueDay" type="number" min="1" max="31" placeholder="Due day" value="${t.dueDay ?? ""}">
+      <select data-k="recurring">
+        <option value="true" ${t.recurring ? "selected" : ""}>Recurring</option>
+        <option value="false" ${!t.recurring ? "selected" : ""}>Off</option>
+      </select>
+      <span class="remove" title="Remove">×</span>
+    `;
+
+    // Change handlers
+    row.querySelectorAll("input, select").forEach(el => {
+      el.addEventListener("input", () => {
+        const updated = getBillTemplates().map(x => {
+          if(String(x.id) !== String(t.id)) return x;
+          const name = row.querySelector('[data-k="name"]').value;
+          const amount = row.querySelector('[data-k="amount"]').value;
+          const dueDay = row.querySelector('[data-k="dueDay"]').value;
+          const recurring = row.querySelector('[data-k="recurring"]').value === "true";
+          return {
+            ...x,
+            name,
+            amount,
+            dueDay,
+            recurring
+          };
+        });
+        saveBillTemplates(updated);
+      });
+    });
+
+    row.querySelector(".remove").addEventListener("click", () => {
+      const updated = getBillTemplates().filter(x => String(x.id) !== String(t.id));
+      saveBillTemplates(updated);
+      renderTemplatesUI();
+    });
+
+    templatesEl.appendChild(row);
+  });
+}
+
+addTemplateBtn.addEventListener("click", () => {
+  const templates = getBillTemplates();
+  templates.push({
+    id: uid(),
+    name: "",
+    amount: "",
+    dueDay: 1,
+    recurring: true
+  });
+  saveBillTemplates(templates);
+  renderTemplatesUI();
+});
 
 /* ===== Events ===== */
 startBal.addEventListener("input", update);
@@ -705,6 +754,7 @@ $("addIncome").addEventListener("click", () => {
     <td data-label="Source"><input></td>
     <td data-label="Amount"><input type="number" inputmode="decimal"></td>
   `);
+  update();
 });
 
 $("addBill").addEventListener("click", () => {
@@ -717,12 +767,14 @@ $("addBill").addEventListener("click", () => {
     <td data-label="Name"><input></td>
     <td data-label="Amount"><input type="number" inputmode="decimal"></td>
   `);
+  update();
 });
 
 $("addDebt").addEventListener("click", () => {
   setDebug("Add Debt clicked ✅");
   if(locked) return;
   createDebtCard();
+  update();
 });
 
 lockBtn.addEventListener("click", () => {
@@ -734,9 +786,8 @@ lockBtn.addEventListener("click", () => {
 });
 
 function handleMonthChange(){
-  // Save the month we were on (lastKey) before switching
+  // Save current month before switching
   save();
-
   // Load newly selected month
   load();
 }
