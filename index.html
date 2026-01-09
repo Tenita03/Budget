@@ -612,28 +612,71 @@ function loadIncomeRows(data=[]){
 }
 
 function loadBillRows(data = []){
+
   // 1️⃣ Load saved bills for this month
   data.forEach(row => {
-    addRow(billsT, `...`);
 
-const tr = billsT.lastElementChild;
-const select = tr.querySelector('[data-label="Linked Debt"] select');
-if (select && row.linkedDebtId) {
-  populateDebtSelect(select, row.linkedDebtId);
-}
+    addRow(billsT, `
+      <td data-label="Paid">
+        <input type="checkbox" ${row.paid ? "checked" : ""}>
+      </td>
+      <td data-label="Due Date">
+        <input type="date" value="${row.dueDate || ""}">
+      </td>
+      <td data-label="Paid Date">
+        <input type="date" value="${row.paidDate || ""}">
+      </td>
+      <td data-label="Name">
+        <input value="${row.name || ""}">
+      </td>
+      <td data-label="Amount">
+        <input type="number" inputmode="decimal" value="${row.amount || ""}">
+      </td>
+      <td data-label="Recurring">
+        <input type="checkbox">
+      </td>
+      <td data-label="Linked Debt">
+        <select></select>
+      </td>
+    `);
 
-      <td data-label="Due Date"><input type="date" value="${row.dueDate || ""}"></td>
-      <td data-label="Paid Date"><input type="date" value="${row.paidDate || ""}"></td>
-      <td data-label="Name"><input value="${row.name || ""}"></td>
-      <td data-label="Amount"><input type="number" inputmode="decimal" value="${row.amount || ""}"></td>
-      <td data-label="Recurring"><input type="checkbox"></td>
-<td data-label="Linked Debt">
-  <select>
-    <option value="">— None —</option>
-  </select>
-</td>
+    // ✅ RESTORE LINKED DEBT
+    const tr = billsT.lastElementChild;
+    const select = tr.querySelector('[data-label="Linked Debt"] select');
+    if (select && row.linkedDebtId) {
+      populateDebtSelect(select, row.linkedDebtId);
+    }
+  });
+
+  // 2️⃣ Inject recurring templates (once per month)
+  const templates = getBillTemplates();
+  const existingNames = new Set(
+    [...billsT.children].map(r =>
+      r.querySelector('[data-label="Name"] input')?.value
+    )
+  );
+
+  templates.forEach(t => {
+    if(!t.recurring) return;
+    if(existingNames.has(t.name)) return;
+
+    const due = new Date(
+      yearSel.value,
+      monthSel.value,
+      t.dueDay
+    ).toISOString().slice(0,10);
+
+    addRow(billsT, `
+      <td data-label="Paid"><input type="checkbox"></td>
+      <td data-label="Due Date"><input type="date" value="${due}"></td>
+      <td data-label="Paid Date"><input type="date" disabled></td>
+      <td data-label="Name"><input value="${t.name}"></td>
+      <td data-label="Amount"><input type="number" inputmode="decimal" value="${t.amount}"></td>
+      <td data-label="Recurring"><input type="checkbox" checked></td>
+      <td data-label="Linked Debt"><select></select></td>
     `);
   });
+}
 
   // 2️⃣ Inject recurring templates (once per month)
   const templates = getBillTemplates();
