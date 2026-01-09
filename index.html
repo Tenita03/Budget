@@ -222,7 +222,6 @@ table tr:hover{ background:#f8fafc; }
     overflow-x: hidden;
   }
 }
-}
 </style>
 </head>
 
@@ -615,8 +614,13 @@ function loadIncomeRows(data=[]){
 function loadBillRows(data = []){
   // 1️⃣ Load saved bills for this month
   data.forEach(row => {
-    addRow(billsT, `
-      <td data-label="Paid"><input type="checkbox" ${row.paid ? "checked" : ""}></td>
+    addRow(billsT, `...`);
+
+const tr = billsT.lastElementChild;
+const select = tr.querySelector('[data-label="Linked Debt"] select');
+if (select && row.linkedDebtId) {
+  populateDebtSelect(select, row.linkedDebtId);
+}
 
       <td data-label="Due Date"><input type="date" value="${row.dueDate || ""}"></td>
       <td data-label="Paid Date"><input type="date" value="${row.paidDate || ""}"></td>
@@ -628,11 +632,6 @@ function loadBillRows(data = []){
     <option value="">— None —</option>
   </select>
 </td>
-const tr = billsT.lastElementChild;
-const select = tr.querySelector('[data-label="Linked Debt"] select');
-if (select) {
-  populateDebtSelect(select, row.linkedDebtId);
-}
     `);
   });
 
@@ -762,6 +761,7 @@ function load(){
   loadDebtRows(d.debt || []);
 
   update();
+renderTemplatesUI();
   setDebug(`Loaded ${yearSel.value}-${Number(monthSel.value) + 1} ✅`);
 }
 
