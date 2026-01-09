@@ -208,23 +208,12 @@ table tr:hover{ background:#f8fafc; }
 
   tbody td::before{
     content: attr(data-label);
-    color:#0f172a;
     font-weight:700;
     font-size:13px;
-    opacity:1;
   }
 
-  tbody td input{
-    width:100%;
-    max-width:140px;
-    text-align:right;
-  }
-
-@media (max-width: 430px) {
   td[data-label="Recurring"],
-  th:nth-child(6),
-  td[data-label="Linked Debt"],
-  th:nth-child(7) {
+  td[data-label="Linked Debt"] {
     display: none;
   }
 
@@ -442,8 +431,7 @@ function addRow(tbody, cellsHtml, templateId = null){
   const tr = document.createElement("tr");
   tr.dataset.templateId = templateId ? String(templateId) : "";
   tr.innerHTML = cellsHtml + `<td><span class="remove" title="Remove">×</span></td>`;
-const select = tr.querySelector('[data-label="Linked Debt"] select');
-populateDebtSelect(select, row.linkedDebtId);
+
 const debtSelect = tr.querySelector('[data-label="Linked Debt"] select');
 if(debtSelect){
   populateDebtSelect(debtSelect);
@@ -499,8 +487,7 @@ function populateDebtSelect(select, selectedId = ""){
 function upsertBillTemplate(row){
   const recurring = row.querySelector('[data-label="Recurring"] input');
   if(!recurring || !recurring.checked) return;
-const select = tr.querySelector('[data-label="Linked Debt"] select');
-populateDebtSelect(select, row.linkedDebtId);
+
   const name   = row.querySelector('[data-label="Name"] input').value;
   const amount = row.querySelector('[data-label="Amount"] input').value;
   const due    = row.querySelector('[data-label="Due Date"] input').value;
@@ -630,6 +617,11 @@ function loadBillRows(data = []){
   data.forEach(row => {
     addRow(billsT, `
       <td data-label="Paid"><input type="checkbox" ${row.paid ? "checked" : ""}></td>
+const tr = billsT.lastElementChild;
+const select = tr.querySelector('[data-label="Linked Debt"] select');
+if (select) {
+  populateDebtSelect(select, row.linkedDebtId);
+}
       <td data-label="Due Date"><input type="date" value="${row.dueDate || ""}"></td>
       <td data-label="Paid Date"><input type="date" value="${row.paidDate || ""}"></td>
       <td data-label="Name"><input value="${row.name || ""}"></td>
