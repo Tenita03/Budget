@@ -617,11 +617,7 @@ function loadBillRows(data = []){
   data.forEach(row => {
     addRow(billsT, `
       <td data-label="Paid"><input type="checkbox" ${row.paid ? "checked" : ""}></td>
-const tr = billsT.lastElementChild;
-const select = tr.querySelector('[data-label="Linked Debt"] select');
-if (select) {
-  populateDebtSelect(select, row.linkedDebtId);
-}
+
       <td data-label="Due Date"><input type="date" value="${row.dueDate || ""}"></td>
       <td data-label="Paid Date"><input type="date" value="${row.paidDate || ""}"></td>
       <td data-label="Name"><input value="${row.name || ""}"></td>
@@ -632,6 +628,11 @@ if (select) {
     <option value="">— None —</option>
   </select>
 </td>
+const tr = billsT.lastElementChild;
+const select = tr.querySelector('[data-label="Linked Debt"] select');
+if (select) {
+  populateDebtSelect(select, row.linkedDebtId);
+}
     `);
   });
 
