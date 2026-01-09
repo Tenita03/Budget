@@ -219,6 +219,20 @@ table tr:hover{ background:#f8fafc; }
     max-width:140px;
     text-align:right;
   }
+
+@media (max-width: 430px) {
+  td[data-label="Recurring"],
+  th:nth-child(6),
+  td[data-label="Linked Debt"],
+  th:nth-child(7) {
+    display: none;
+  }
+
+  table {
+    width: 100%;
+    overflow-x: hidden;
+  }
+}
 }
 </style>
 </head>
@@ -389,7 +403,8 @@ function getBillsData(){
     dueDate: r.querySelector('[data-label="Due Date"] input')?.value || "",
     paidDate: r.querySelector('[data-label="Paid Date"] input')?.value || "",
     name: r.querySelector('[data-label="Name"] input')?.value || "",
-    amount: r.querySelector('[data-label="Amount"] input')?.value || ""
+    amount: r.querySelector('[data-label="Amount"] input')?.value || "",
+    linkedDebtId: r.querySelector('[data-label="Linked Debt"] select')?.value || ""
   }));
 }
 
@@ -427,6 +442,8 @@ function addRow(tbody, cellsHtml, templateId = null){
   const tr = document.createElement("tr");
   tr.dataset.templateId = templateId ? String(templateId) : "";
   tr.innerHTML = cellsHtml + `<td><span class="remove" title="Remove">×</span></td>`;
+const select = tr.querySelector('[data-label="Linked Debt"] select');
+populateDebtSelect(select, row.linkedDebtId);
 const debtSelect = tr.querySelector('[data-label="Linked Debt"] select');
 if(debtSelect){
   populateDebtSelect(debtSelect);
@@ -482,7 +499,8 @@ function populateDebtSelect(select, selectedId = ""){
 function upsertBillTemplate(row){
   const recurring = row.querySelector('[data-label="Recurring"] input');
   if(!recurring || !recurring.checked) return;
-
+const select = tr.querySelector('[data-label="Linked Debt"] select');
+populateDebtSelect(select, row.linkedDebtId);
   const name   = row.querySelector('[data-label="Name"] input').value;
   const amount = row.querySelector('[data-label="Amount"] input').value;
   const due    = row.querySelector('[data-label="Due Date"] input').value;
@@ -688,37 +706,12 @@ function sumBills(){
   return total;
 }
 
-function calcDebtOut(){
-  let total = 0;
 
-  debtT.querySelectorAll(".debt-card").forEach(card=>{
-    const inputs = card.querySelectorAll("input");
-
-    const bal   = Number(inputs[1]?.value) || 0;
-    const apr   = Number(inputs[2]?.value) || 0;
-    const pay   = Number(inputs[3]?.value) || 0;
-    const extra = Number(inputs[4]?.value) || 0;
-
-    const interest  = bal * (apr / 100 / 12);
-    const principal = Math.max(pay - interest, 0) + extra;
-    const newBal    = Math.max(bal - principal, 0);
-
-    card.querySelector(".interest").textContent  = money(interest);
-    card.querySelector(".principal").textContent = money(principal);
-    card.querySelector(".newbal").textContent    = money(newBal);
-
-    total += pay + extra;
-  });
-
-  return total;
-}
-
-function renderBreakdown(start, income, bills, debt, remainingValue){
+function renderBreakdown(start, income, bills, remainingValue){
   $("breakdownContent").innerHTML = `
     <div class="breakdown-line"><span>Starting Balance</span><span>${money(start)}</span></div>
     <div class="breakdown-line"><span>Income</span><span style="color:#16a34a">+${money(income)}</span></div>
     <div class="breakdown-line"><span>Bills</span><span style="color:#dc2626">−${money(bills)}</span></div>
-    <div class="breakdown-line"><span>Debt Payments</span><span style="color:#dc2626">−${money(debt)}</span></div>
     <div class="breakdown-line breakdown-total"><span>Remaining</span><span>${money(remainingValue)}</span></div>
   `;
 }
@@ -727,15 +720,17 @@ function update(){
   const start  = Number(startBal.value) || 0;
   const income = sumIncome();
   const bills  = sumBills();
-  const debt   = calcDebtOut();
 
   const remainingValue = start + income - bills;
-billsT.querySelectorAll("tr").forEach(upsertBillTemplate);
-  remaining.textContent = money(remainingValue);
-applyBillPaymentsToDebt();
-  renderBreakdown(start, income, bills, debt, remainingValue);
 
+  remaining.textContent = money(remainingValue);
+
+  billsT.querySelectorAll("tr").forEach(upsertBillTemplate);
+  applyBillPaymentsToDebt();
+
+  renderBreakdown(start, income, bills, remainingValue);
   $("summary").textContent = "Monthly activity updated.";
+
   save();
 }
 
