@@ -730,6 +730,22 @@ function syncDebtMasterFromUI(){
   saveDebtsMaster(cleaned);
 }
 
+function syncDebtMasterFromUI(){
+  const ui = getDebtUIData();
+const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+  const cleaned = ui.map(d=>({
+    id: d.id,
+    name: d.name || "",
+    balance: round2(d.balance),
+    apr: Number(d.apr) || 0,
+    payment: Number(d.payment) || 0,
+    extra: Number(d.extra) || 0
+  }));
+  saveDebtsMaster(cleaned);
+
+  // ✅ keep bill dropdowns in sync
+  refreshAllDebtSelects();
+}
 /* ===== Loaders ===== */
 function loadIncomeRows(data=[]){
   data.forEach(row => {
@@ -907,7 +923,7 @@ function recomputeDebtsFromBaselinesAndPayments(){
 
   // Reset to baseline
   debts.forEach(d=>{
-    d.balance = Number(baselines[d.id]) || 0;
+    d.balance = round2(baselines[d.id]);
   });
 
   const payments = collectAllPaidLinkedPayments();
@@ -923,7 +939,7 @@ function recomputeDebtsFromBaselinesAndPayments(){
     const interest = bal * (apr/100/12);
     const principal = Math.max(p.amount - interest, 0);
 
-    d.balance = Math.max(bal - principal, 0);
+    d.balance = round2(Math.max(bal - principal, 0));
   });
 
   saveDebtsMaster(debts);
@@ -935,7 +951,7 @@ function recomputeDebtsFromBaselinesAndPayments(){
     if(!d) return;
     const inputs = card.querySelectorAll("input");
     // Balance is inputs[1]
-    inputs[1].value = (Number(d.balance) || 0);
+   inputs[1].value = round2(d.balance);
   });
 
   refreshAllDebtSelects();
@@ -1065,8 +1081,7 @@ function simulatePayoff(strategy, extraPool){
       const targets = working.filter(d=>d.balance>0).sort(orderFn);
       if(targets.length===0) break;
       const t = targets[0];
-      const chunk = Math.min(pool, t.balance);
-      t.balance = Math.max(t.balance - chunk, iol => 0);
+      const chunk = Math.min(pool, t.balance = Math.max(t.balance - chunk, 0);
       pool -= chunk;
     }
   }
@@ -1195,13 +1210,22 @@ function load(){
   extraPoolEl.value = d.payoff?.extraPool || "";
 
   clear(incomeT);
-  clear(billsT);
+clear(billsT);
 
-  loadIncomeRows(d.income || []);
-  loadBillRows(d.bills || []);
+// income first is fine
+loadIncomeRows(d.income || []);
 
-  // Debt loads from master (carry forward); seed master from month snapshot if needed
-  loadDebtFromMasterOrMonth(d.debt || []);
+// ✅ IMPORTANT: load debts FIRST (so debts-master exists)
+loadDebtFromMasterOrMonth(d.debt || []);
+
+// ✅ now load bills (their Linked Debt selects will populate correctly)
+loadBillRows(d.bills || []);
+
+// ✅ then templates
+renderTemplatesUI();
+
+update();
+setDebug(`Loaded ${yearSel.value}-${Number(monthSel.value) + 1} ✅`);
 
   // Templates UI
   renderTemplatesUI();
