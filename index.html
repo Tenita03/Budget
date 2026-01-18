@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Paycheck Tracker – Stable Base (Recurring Bills)</title>
+<title>Paycheck Tracker – Stable Base (Recurring Bills + Debt Linking + Payoff Plan)</title>
 
 <style>
 :root{
@@ -47,7 +47,8 @@ h2{ margin:0 0 12px; font-size:18px; }
 .collapsed table,
 .collapsed button,
 .collapsed #debt,
-.collapsed .template-ui {
+.collapsed .template-ui,
+.collapsed .payoff-ui {
   display:none;
 }
 
@@ -65,10 +66,24 @@ button{
 }
 button.secondary{ background:#94a3b8; }
 
-table{ width:100%; border-collapse:collapse; }
-th, td{ padding:8px; border-bottom:1px solid var(--line); text-align:left; }
+/* Tables: prevent horizontal scroll on narrow widths */
+table{
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;
+}
+th, td{
+  padding:8px;
+  border-bottom:1px solid var(--line);
+  text-align:left;
+  vertical-align:middle;
+  overflow:hidden;
+}
 th{ font-size:12px; color:var(--muted); }
-table input{ background:#fafafa; }
+table input, table select{
+  width:100%;
+  background:#fafafa;
+}
 table tr:hover{ background:#f8fafc; }
 
 .remove{ cursor:pointer; color:#94a3b8; font-size:18px; user-select:none; }
@@ -96,12 +111,16 @@ table tr:hover{ background:#f8fafc; }
 /* Lock ONLY data entry — never navigation */
 .locked #income input,
 .locked #bills input,
+.locked #bills select,
 .locked #debt input,
+.locked #debt select,
 .locked .remove,
 .locked .debt-remove,
 .locked #addIncome,
 .locked #addBill,
-.locked #addDebt {
+.locked #addDebt,
+.locked #addTemplate,
+.locked .template-ui .remove {
   pointer-events:none;
   opacity:.6;
 }
@@ -137,7 +156,7 @@ table tr:hover{ background:#f8fafc; }
   gap:12px;
 }
 .debt-field label{ font-size:13px; color:var(--muted); }
-.debt-field input{ max-width:140px; text-align:right; }
+.debt-field input{ max-width:160px; text-align:right; }
 .debt-results{
   margin-top:10px;
   padding-top:10px;
@@ -150,6 +169,19 @@ table tr:hover{ background:#f8fafc; }
   margin-bottom:4px;
   font-weight:600;
 }
+.debt-badge{
+  margin-top:10px;
+  padding:10px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:#f8fafc;
+  font-size:13px;
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.debt-badge strong{ font-weight:800; }
 .debt-remove{
   margin-top:10px;
   background:#e5e7eb;
@@ -168,20 +200,60 @@ table tr:hover{ background:#f8fafc; }
   gap:10px;
   align-items:center;
 }
-.template-row input, .template-row select{
-  width:100%;
+.template-row input, .template-row select{ width:100%; }
+.template-row .remove{ font-size:20px; padding:0 6px; }
+
+/* Payoff UI */
+.payoff-ui{
+  border-top:1px solid var(--line);
+  padding-top:12px;
+  margin-top:12px;
 }
-.template-row .remove{
-  font-size:20px;
-  padding:0 6px;
+.payoff-row{
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap:10px;
+  align-items:center;
+}
+.payoff-table{
+  margin-top:10px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  overflow:hidden;
+}
+.payoff-table .hdr,
+.payoff-table .r{
+  display:grid;
+  grid-template-columns: 1.4fr .8fr .8fr .9fr;
+  gap:10px;
+  padding:10px;
+}
+.payoff-table .hdr{
+  background:#f8fafc;
+  font-size:12px;
+  color:var(--muted);
+  font-weight:700;
+}
+.payoff-table .r{
+  border-top:1px solid var(--line);
+  font-size:13px;
+}
+.payoff-pill{
+  display:inline-block;
+  padding:4px 8px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:#fff;
+  font-size:12px;
+  color:#334155;
+  font-weight:700;
 }
 
 /* Mobile stacked table cards */
 @media (max-width:480px){
   .row{ grid-template-columns:1fr; }
-  .template-row{
-    grid-template-columns: 1fr 1fr;
-  }
+  .template-row{ grid-template-columns: 1fr 1fr; }
+  .payoff-row{ grid-template-columns:1fr; }
 }
 
 @media (max-width: 430px) {
@@ -266,7 +338,7 @@ table tr:hover{ background:#f8fafc; }
 
     <table>
       <thead>
-        <tr><th>Date</th><th>Source</th><th>Amount</th><th></th></tr>
+        <tr><th style="width:28%;">Date</th><th>Source</th><th style="width:24%;">Amount</th><th style="width:36px;"></th></tr>
       </thead>
       <tbody id="income"></tbody>
     </table>
@@ -282,7 +354,15 @@ table tr:hover{ background:#f8fafc; }
 
     <table>
       <thead>
-        <tr><th>✔</th><th>Due</th><th>Paid</th><th>Name</th><th>Amount</th><th></th></tr>
+        <tr>
+          <th style="width:44px;">✔</th>
+          <th style="width:28%;">Due</th>
+          <th style="width:28%;">Paid</th>
+          <th>Name</th>
+          <th style="width:18%;">Amount</th>
+          <th style="width:18%;">Linked Debt</th>
+          <th style="width:36px;"></th>
+        </tr>
       </thead>
       <tbody id="bills"></tbody>
     </table>
@@ -305,18 +385,41 @@ table tr:hover{ background:#f8fafc; }
   <!-- DEBT -->
   <div class="card">
     <div class="section-header" onclick="toggleSection(this)">
-      <h2>Debt</h2>
+      <h2>Loans & Balances</h2>
       <span class="section-toggle">Hide</span>
     </div>
 
-    <div id="debt"></div>
+    <!-- Payoff plan -->
+    <div class="payoff-ui">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+        <div style="font-weight:800;">Payoff Projection</div>
+        <span class="payoff-pill" id="payoffSummary">—</span>
+      </div>
+
+      <div class="payoff-row" style="margin-top:10px;">
+        <select id="payoffStrategy">
+          <option value="avalanche">Avalanche (highest APR first)</option>
+          <option value="snowball">Snowball (smallest balance first)</option>
+        </select>
+        <input id="extraPool" type="number" inputmode="decimal" placeholder="Extra pool (optional)" />
+        <button id="recalcPayoff" type="button" class="secondary">Recalculate</button>
+      </div>
+
+      <div class="payoff-table" id="payoffTable" aria-label="Payoff projection table"></div>
+
+      <div style="font-size:12px; color:var(--muted); margin-top:10px;">
+        This is an estimate using monthly interest and your Payment + Extra fields, plus the optional Extra Pool applied by your chosen strategy.
+      </div>
+    </div>
+
+    <div id="debt" style="margin-top:12px;"></div>
     <button id="addDebt" type="button">+ Add Debt</button>
   </div>
 
 </div>
 
 <script>
-/* ========= STABLE CORE + RECURRING BILLS ========= */
+/* ========= STABLE CORE + RECURRING BILLS + DEBT LINKING + PAYOFF ========= */
 const $ = id => document.getElementById(id);
 const money = n => `$${(Number(n) || 0).toFixed(2)}`;
 
@@ -337,10 +440,21 @@ const lockBtn   = $("lockBtn");
 const templatesEl = $("templates");
 const addTemplateBtn = $("addTemplate");
 
+const payoffStrategyEl = $("payoffStrategy");
+const extraPoolEl = $("extraPool");
+const recalcPayoffBtn = $("recalcPayoff");
+const payoffTableEl = $("payoffTable");
+const payoffSummaryEl = $("payoffSummary");
+
 let locked = false;
+let lastKey = null;
 
 function setDebug(msg){
   debugEl.innerHTML = `Status: <strong>${msg}</strong>`;
+}
+
+function uid(prefix="id"){
+  return `${prefix}_${Math.random().toString(36).slice(2,10)}_${Date.now().toString(36)}`;
 }
 
 /* ===== Templates (global) ===== */
@@ -349,6 +463,18 @@ function getBillTemplates(){
 }
 function saveBillTemplates(templates){
   localStorage.setItem("bill-templates", JSON.stringify(templates));
+}
+
+/* ===== Global debts store (carry-forward) =====
+   debts-master holds the "current" balances across months.
+   Each month still saves debt array snapshot only for UI fields,
+   but on load we source from debts-master to carry forward.
+*/
+function getDebtsMaster(){
+  return JSON.parse(localStorage.getItem("debts-master") || "[]");
+}
+function saveDebtsMaster(debts){
+  localStorage.setItem("debts-master", JSON.stringify(debts));
 }
 
 /* Month / Year */
@@ -378,6 +504,7 @@ function toggleSection(header){
 /* ===== Data getters ===== */
 function getIncomeData(){
   return [...incomeT.querySelectorAll("tr")].map(r => ({
+    id:     r.dataset.rowId || uid("inc"),
     date:   r.querySelector('td[data-label="Date"] input')?.value || "",
     source: r.querySelector('td[data-label="Source"] input')?.value || "",
     amount: r.querySelector('td[data-label="Amount"] input')?.value || ""
@@ -386,17 +513,19 @@ function getIncomeData(){
 
 function getBillsData(){
   return [...billsT.querySelectorAll("tr")].map(r => ({
+    id: r.dataset.rowId || uid("bill"),
     templateId: r.dataset.templateId || null,
     paid: r.querySelector('[data-label="Paid"] input')?.checked || false,
     dueDate: r.querySelector('[data-label="Due Date"] input')?.value || "",
     paidDate: r.querySelector('[data-label="Paid Date"] input')?.value || "",
     name: r.querySelector('[data-label="Name"] input')?.value || "",
     amount: r.querySelector('[data-label="Amount"] input')?.value || "",
+    recurring: r.querySelector('[data-label="Recurring"] input')?.checked || false,
     linkedDebtId: r.querySelector('[data-label="Linked Debt"] select')?.value || ""
   }));
 }
 
-function getDebtData(){
+function getDebtUIData(){
   return [...debtT.querySelectorAll(".debt-card")].map(card=>{
     const i = card.querySelectorAll("input");
     return {
@@ -412,40 +541,26 @@ function getDebtData(){
 
 function clear(el){ el.innerHTML = ""; }
 
-/* ===== Helpers ===== */
-function clampDueDate(year, monthIndex, dueDay){
-  const y = Number(year);
-  const m = Number(monthIndex);
-  const d = Math.max(1, Number(dueDay) || 1);
-
-  // last day of month: day 0 of next month
-  const lastDay = new Date(y, m + 1, 0).getDate();
-  const dd = Math.min(d, lastDay);
-
-  return new Date(y, m, dd).toISOString().slice(0,10);
-}
-
 /* ===== Row builder (for income + bills) ===== */
-function addRow(tbody, cellsHtml, templateId = null){
+function addRow(tbody, cellsHtml, opts = {}){
   const tr = document.createElement("tr");
-  tr.dataset.templateId = templateId ? String(templateId) : "";
+  tr.dataset.templateId = opts.templateId ? String(opts.templateId) : "";
+  tr.dataset.rowId = opts.rowId || uid(tbody === billsT ? "bill" : "inc");
   tr.innerHTML = cellsHtml + `<td><span class="remove" title="Remove">×</span></td>`;
 
-const debtSelect = tr.querySelector('[data-label="Linked Debt"] select');
-if(debtSelect){
-  populateDebtSelect(debtSelect);
-  debtSelect.addEventListener("change", update);
-}
-  tr.querySelector(".remove").addEventListener("click", () => {
-    if(locked) return;
-    tr.remove();
-    update();
-  });
+  const removeBtn = tr.querySelector(".remove");
+  if(removeBtn){
+    removeBtn.addEventListener("click", () => {
+      if(locked) return;
+      tr.remove();
+      update();
+    });
+  }
 
-  // Wire all inputs
-  tr.querySelectorAll("input").forEach(input => {
-    input.addEventListener("input", update);
-    input.addEventListener("change", update);
+  // Wire inputs/selects
+  tr.querySelectorAll("input, select").forEach(el => {
+    el.addEventListener("input", update);
+    el.addEventListener("change", update);
   });
 
   // Bills: paid checkbox controls paid date
@@ -464,119 +579,74 @@ if(debtSelect){
         paidDate.disabled = true;
       }
     };
-    sync(); // important on load
+    sync();
     paid.addEventListener("change", () => { sync(); update(); });
   }
 
+  // Linked debt dropdown
+  const debtSelect = tr.querySelector('td[data-label="Linked Debt"] select');
+  if(debtSelect){
+    populateDebtSelect(debtSelect, opts.selectedDebtId || "");
+  }
+
   tbody.appendChild(tr);
+  return tr;
 }
 
 function populateDebtSelect(select, selectedId = ""){
+  if(!select) return;
+  const debts = getDebtsMaster();
   select.innerHTML = `<option value="">— None —</option>`;
-
-  getDebtData().forEach(d => {
+  debts.forEach(d => {
     const opt = document.createElement("option");
     opt.value = d.id;
     opt.textContent = d.name || "Unnamed Debt";
-    if(d.id === selectedId) opt.selected = true;
+    if(String(d.id) === String(selectedId)) opt.selected = true;
     select.appendChild(opt);
   });
 }
 
 function refreshAllDebtSelects(){
-  // For every bill row that has a linked-debt select:
-  billsT.querySelectorAll('tr').forEach(tr => {
-    const select = tr.querySelector('[data-label="Linked Debt"] select');
-    if(!select) return;
-
-    // Preserve current selection if any
-    const current = select.value || "";
-    populateDebtSelect(select, current);
+  const debts = getDebtsMaster();
+  billsT.querySelectorAll('select').forEach(sel=>{
+    const current = sel.value || "";
+    sel.innerHTML = `<option value="">— None —</option>`;
+    debts.forEach(d=>{
+      const opt = document.createElement("option");
+      opt.value = d.id;
+      opt.textContent = d.name || "Unnamed Debt";
+      if(String(d.id) === String(current)) opt.selected = true;
+      sel.appendChild(opt);
+    });
   });
 }
 
-function upsertBillTemplate(row){
+/* ===== Recurring template upsert from bill row ===== */
+function upsertBillTemplateFromRow(row){
   const recurring = row.querySelector('[data-label="Recurring"] input');
   if(!recurring || !recurring.checked) return;
 
-  const name   = row.querySelector('[data-label="Name"] input').value;
-  const amount = row.querySelector('[data-label="Amount"] input').value;
-  const due    = row.querySelector('[data-label="Due Date"] input').value;
-
+  const name   = row.querySelector('[data-label="Name"] input')?.value || "";
+  const amount = row.querySelector('[data-label="Amount"] input')?.value || "";
+  const due    = row.querySelector('[data-label="Due Date"] input')?.value || "";
   if(!name || !amount || !due) return;
 
   const dueDay = new Date(due).getDate();
-
   let templates = getBillTemplates();
-
   let existing = templates.find(t => t.name === name);
 
   if(!existing){
-    templates.push({
-      id: crypto.randomUUID(),
-      name,
-      amount,
-      dueDay,
-      recurring: true
-    });
+    templates.push({ id: uid("t"), name, amount, dueDay, recurring: true });
+    saveBillTemplates(templates);
+    renderTemplatesUI();
   }
-
-  saveBillTemplates(templates);
 }
 
-function applyBillPaymentsToDebt(){
-  const debts = getDebtData();
-
-  billsT.querySelectorAll("tr").forEach(row=>{
-    const paid = row.querySelector('[data-label="Paid"] input')?.checked;
-    if(!paid) return;
-
-    const debtId = row.querySelector('[data-label="Linked Debt"] select')?.value;
-    if(!debtId) return;
-
-    const amount = Number(
-      row.querySelector('[data-label="Amount"] input')?.value
-    ) || 0;
-
-    const debt = debts.find(d => d.id === debtId);
-    if(!debt || amount <= 0) return;
-
-    const apr = Number(debt.apr) || 0;
-    const interest = (Number(debt.balance) || 0) * (apr / 100 / 12);
-    const principal = Math.max(amount - interest, 0);
-
-const card = [...debtT.querySelectorAll(".debt-card")]
-  .find(c => c.dataset.debtId === debtId);
-
-if(card){
-  card.querySelector(".interest").textContent  = money(interest);
-  card.querySelector(".principal").textContent = money(principal);
-  card.querySelector(".newbal").textContent    = money(debt.balance);
-}
-
-    debt.balance = Math.max(
-      Number(debt.balance) - principal,
-      0
-
-
-    );
-  });
-
-  // Write balances back to UI
-  debtT.querySelectorAll(".debt-card").forEach(card=>{
-    const id = card.dataset.debtId;
-    const d = debts.find(x => x.id === id);
-    if(!d) return;
-
-    card.querySelectorAll("input")[1].value = d.balance;
-  });
-}
-
-/* ===== Debt cards ===== */
+/* ===== Debt Cards ===== */
 function createDebtCard(data = {}){
   const card = document.createElement("div");
   card.className = "debt-card";
-  card.dataset.debtId = data.id || crypto.randomUUID();
+  card.dataset.debtId = data.id || uid("debt");
 
   card.innerHTML = `
     <div class="debt-title">
@@ -604,9 +674,15 @@ function createDebtCard(data = {}){
     </div>
 
     <div class="debt-results">
-      <div><span>Interest</span><span class="interest">$0.00</span></div>
-      <div><span>Principal</span><span class="principal">$0.00</span></div>
-      <div><span>New Balance</span><span class="newbal">$0.00</span></div>
+      <div><span>Interest (this month’s linked payments)</span><span class="interest">$0.00</span></div>
+      <div><span>Principal (this month’s linked payments)</span><span class="principal">$0.00</span></div>
+      <div><span>New Balance (after linked payments)</span><span class="newbal">$0.00</span></div>
+    </div>
+
+    <div class="debt-badge" aria-label="Debt badges">
+      <div>Paid this month: <strong class="paidThisMonth">$0.00</strong></div>
+      <div>Linked bills paid: <strong class="countThisMonth">0</strong></div>
+      <div>Last paid: <strong class="lastPaid">—</strong></div>
     </div>
 
     <button class="debt-remove" type="button">Remove Debt</button>
@@ -614,67 +690,78 @@ function createDebtCard(data = {}){
 
   card.querySelector(".debt-remove").addEventListener("click", () => {
     if(locked) return;
+
+    const id = card.dataset.debtId;
+    // remove from master
+    const debts = getDebtsMaster().filter(d => String(d.id) !== String(id));
+    saveDebtsMaster(debts);
+
+    // unlink any bills that pointed to it (in current UI only; persisted on save)
+    billsT.querySelectorAll('tr').forEach(tr=>{
+      const sel = tr.querySelector('td[data-label="Linked Debt"] select');
+      if(sel && String(sel.value) === String(id)) sel.value = "";
+    });
+
     card.remove();
+    refreshAllDebtSelects();
     update();
   });
 
+  // Any changes update master + selects
   card.querySelectorAll("input").forEach(i => i.addEventListener("input", () => {
-  refreshAllDebtSelects();   // keep bill dropdowns in sync with debt list/names
-  update();
-}));
+    syncDebtMasterFromUI();
+    refreshAllDebtSelects();
+    update(); // keep badges & payoff in sync
+  }));
 
   debtT.appendChild(card);
+}
+
+function syncDebtMasterFromUI(){
+  const ui = getDebtUIData();
+  const cleaned = ui.map(d=>({
+    id: d.id,
+    name: d.name || "",
+    balance: Number(d.balance) || 0,
+    apr: Number(d.apr) || 0,
+    payment: Number(d.payment) || 0,
+    extra: Number(d.extra) || 0
+  }));
+  saveDebtsMaster(cleaned);
 }
 
 /* ===== Loaders ===== */
 function loadIncomeRows(data=[]){
   data.forEach(row => {
-    addRow(incomeT, `
+    const tr = addRow(incomeT, `
       <td data-label="Date"><input type="date" value="${row.date || ""}"></td>
       <td data-label="Source"><input value="${row.source || ""}"></td>
       <td data-label="Amount"><input type="number" inputmode="decimal" value="${row.amount || ""}"></td>
-    `);
+    `, { rowId: row.id || uid("inc") });
+    tr.dataset.rowId = row.id || tr.dataset.rowId;
   });
 }
 
 function loadBillRows(data = []){
-
-  // 1️⃣ Load saved bills for this month
+  // 1) Load saved bills
   data.forEach(row => {
-
-    addRow(billsT, `
-      <td data-label="Paid">
-        <input type="checkbox" ${row.paid ? "checked" : ""}>
-      </td>
-      <td data-label="Due Date">
-        <input type="date" value="${row.dueDate || ""}">
-      </td>
-      <td data-label="Paid Date">
-        <input type="date" value="${row.paidDate || ""}">
-      </td>
-      <td data-label="Name">
-        <input value="${row.name || ""}">
-      </td>
-      <td data-label="Amount">
-        <input type="number" inputmode="decimal" value="${row.amount || ""}">
-      </td>
-      <td data-label="Recurring">
-        <input type="checkbox">
-      </td>
-      <td data-label="Linked Debt">
-        <select></select>
-      </td>
-    `);
-
-    // ✅ RESTORE LINKED DEBT
-    const tr = billsT.lastElementChild;
-    const select = tr.querySelector('[data-label="Linked Debt"] select');
-    if (select && row.linkedDebtId) {
-      populateDebtSelect(select, row.linkedDebtId);
-    }
+    const tr = addRow(billsT, `
+      <td data-label="Paid"><input type="checkbox" ${row.paid ? "checked" : ""}></td>
+      <td data-label="Due Date"><input type="date" value="${row.dueDate || ""}"></td>
+      <td data-label="Paid Date"><input type="date" value="${row.paidDate || ""}"></td>
+      <td data-label="Name"><input value="${row.name || ""}"></td>
+      <td data-label="Amount"><input type="number" inputmode="decimal" value="${row.amount || ""}"></td>
+      <td data-label="Recurring"><input type="checkbox" ${row.recurring ? "checked" : ""}></td>
+      <td data-label="Linked Debt"><select></select></td>
+    `, {
+      templateId: row.templateId || null,
+      rowId: row.id || uid("bill"),
+      selectedDebtId: row.linkedDebtId || ""
+    });
+    tr.dataset.rowId = row.id || tr.dataset.rowId;
   });
 
-  // 2️⃣ Inject recurring templates (once per month)
+  // 2) Inject recurring templates (once per month)
   const templates = getBillTemplates();
   const existingNames = new Set(
     [...billsT.children].map(r =>
@@ -686,11 +773,7 @@ function loadBillRows(data = []){
     if(!t.recurring) return;
     if(existingNames.has(t.name)) return;
 
-    const due = new Date(
-      yearSel.value,
-      monthSel.value,
-      t.dueDay
-    ).toISOString().slice(0,10);
+    const due = new Date(yearSel.value, monthSel.value, t.dueDay).toISOString().slice(0,10);
 
     addRow(billsT, `
       <td data-label="Paid"><input type="checkbox"></td>
@@ -700,14 +783,29 @@ function loadBillRows(data = []){
       <td data-label="Amount"><input type="number" inputmode="decimal" value="${t.amount}"></td>
       <td data-label="Recurring"><input type="checkbox" checked></td>
       <td data-label="Linked Debt"><select></select></td>
-    `);
+    `, { templateId: t.id, rowId: uid("bill"), selectedDebtId: "" });
   });
 }
 
-  
+function loadDebtFromMasterOrMonth(monthDebtSnapshot=[]){
+  // Master carries forward; if empty and month has snapshot, seed master from it.
+  let master = getDebtsMaster();
+  if(master.length === 0 && (monthDebtSnapshot || []).length){
+    master = monthDebtSnapshot.map(d=>({
+      id: d.id || uid("debt"),
+      name: d.name || "",
+      balance: Number(d.balance) || 0,
+      apr: Number(d.apr) || 0,
+      payment: Number(d.payment) || 0,
+      extra: Number(d.extra) || 0
+    }));
+    saveDebtsMaster(master);
+  }
 
-function loadDebtRows(data=[]){
-  data.forEach(d => createDebtCard(d));
+  // Render from master
+  clear(debtT);
+  getDebtsMaster().forEach(d => createDebtCard(d));
+  refreshAllDebtSelects();
 }
 
 /* ===== Calculations ===== */
@@ -722,20 +820,307 @@ function sumIncome(){
 
 function sumBills(){
   let total = 0;
-
   billsT.querySelectorAll("tr").forEach(r=>{
     const amt = Number(r.querySelector('td[data-label="Amount"] input')?.value) || 0;
     total += amt;
 
-    // visual only
     const paid = r.querySelector('td[data-label="Paid"] input')?.checked;
     r.style.opacity = paid ? 0.45 : 1;
   });
-
   return total;
 }
 
+/* ===== Debt update from linked paid bills (this month, visible feedback) =====
+   IMPORTANT:
+   - Remaining is NOT affected by debt.
+   - Debt balances are updated globally (debts-master) based on paid linked bills.
+   - We avoid double-application by recomputing from a stored "baseline" per debt + all paid linked payments history.
+*/
+function allMonthKeys(){
+  const keys = [];
+  for(let i=0;i<localStorage.length;i++){
+    const k = localStorage.key(i);
+    if(/^stable-\d{4}-\d{1,2}$/.test(k)) keys.push(k);
+  }
+  return keys.sort();
+}
 
+function collectAllPaidLinkedPayments(){
+  // returns array of {debtId, amount, dateISO, billId}
+  const out = [];
+  const keys = allMonthKeys();
+  keys.forEach(k=>{
+    const d = JSON.parse(localStorage.getItem(k) || "{}");
+    const bills = d.bills || [];
+    bills.forEach(b=>{
+      if(!b) return;
+      if(!b.paid) return;
+      if(!b.linkedDebtId) return;
+      const amt = Number(b.amount) || 0;
+      if(amt <= 0) return;
+      const date = b.paidDate || b.dueDate || "";
+      out.push({
+        debtId: b.linkedDebtId,
+        amount: amt,
+        dateISO: date || "9999-12-31",
+        billId: b.id || uid("bill")
+      });
+    });
+  });
+  // chronological (rough)
+  out.sort((a,b)=> String(a.dateISO).localeCompare(String(b.dateISO)));
+  return out;
+}
+
+// Store baseline starting balances to make recompute deterministic
+function getDebtBaselines(){
+  return JSON.parse(localStorage.getItem("debt-baselines") || "{}");
+}
+function saveDebtBaselines(b){
+  localStorage.setItem("debt-baselines", JSON.stringify(b));
+}
+
+function ensureBaselines(){
+  const baselines = getDebtBaselines();
+  const debts = getDebtsMaster();
+  let changed = false;
+  debts.forEach(d=>{
+    if(baselines[d.id] == null){
+      baselines[d.id] = Number(d.balance) || 0;
+      changed = true;
+    }
+  });
+  // Remove baselines for deleted debts
+  Object.keys(baselines).forEach(id=>{
+    if(!debts.some(d=>String(d.id)===String(id))){
+      delete baselines[id];
+      changed = true;
+    }
+  });
+  if(changed) saveDebtBaselines(baselines);
+  return baselines;
+}
+
+function recomputeDebtsFromBaselinesAndPayments(){
+  const baselines = ensureBaselines();
+  const debts = getDebtsMaster().map(d=>({...d}));
+
+  // Reset to baseline
+  debts.forEach(d=>{
+    d.balance = Number(baselines[d.id]) || 0;
+  });
+
+  const payments = collectAllPaidLinkedPayments();
+
+  // Apply each payment sequentially (monthly interest approximation)
+  payments.forEach(p=>{
+    const d = debts.find(x=>String(x.id)===String(p.debtId));
+    if(!d) return;
+
+    const bal = Number(d.balance) || 0;
+    const apr = Number(d.apr) || 0;
+
+    const interest = bal * (apr/100/12);
+    const principal = Math.max(p.amount - interest, 0);
+
+    d.balance = Math.max(bal - principal, 0);
+  });
+
+  saveDebtsMaster(debts);
+
+  // Update UI fields for balances (without triggering loops)
+  debtT.querySelectorAll(".debt-card").forEach(card=>{
+    const id = card.dataset.debtId;
+    const d = debts.find(x=>String(x.id)===String(id));
+    if(!d) return;
+    const inputs = card.querySelectorAll("input");
+    // Balance is inputs[1]
+    inputs[1].value = (Number(d.balance) || 0);
+  });
+
+  refreshAllDebtSelects();
+}
+
+function monthPaidLinkedStats(){
+  // stats just for current month selection
+  const month = JSON.parse(localStorage.getItem(key()) || "{}");
+  const bills = month.bills || [];
+
+  const stats = {}; // debtId -> {amt,count,lastDate,interest,principal,newBalance}
+  bills.forEach(b=>{
+    if(!b || !b.paid || !b.linkedDebtId) return;
+    const amt = Number(b.amount) || 0;
+    if(amt <= 0) return;
+    const id = b.linkedDebtId;
+    stats[id] = stats[id] || {amt:0,count:0,lastDate:"—",interest:0,principal:0};
+    stats[id].amt += amt;
+    stats[id].count += 1;
+    const dt = b.paidDate || b.dueDate || "";
+    if(dt && (stats[id].lastDate==="—" || String(dt) > String(stats[id].lastDate))) stats[id].lastDate = dt;
+  });
+
+  // compute interest/principal for this month’s total (approx on current balance BEFORE month? we'll use baseline-ish: current balance + principal)
+  const debts = getDebtsMaster();
+  Object.keys(stats).forEach(debtId=>{
+    const d = debts.find(x=>String(x.id)===String(debtId));
+    if(!d) return;
+    const bal = Number(d.balance) || 0;
+    const apr = Number(d.apr) || 0;
+    const interest = bal * (apr/100/12);
+    const principal = Math.max(stats[debtId].amt - interest, 0);
+    stats[debtId].interest = interest;
+    stats[debtId].principal = principal;
+  });
+
+  return stats;
+}
+
+function renderDebtBadgesAndResults(){
+  const stats = monthPaidLinkedStats();
+  const debts = getDebtsMaster();
+
+  debtT.querySelectorAll(".debt-card").forEach(card=>{
+    const id = card.dataset.debtId;
+    const d = debts.find(x=>String(x.id)===String(id));
+    const s = stats[id];
+
+    const interestEl = card.querySelector(".interest");
+    const principalEl = card.querySelector(".principal");
+    const newBalEl = card.querySelector(".newbal");
+
+    if(d){
+      newBalEl.textContent = money(d.balance);
+    }
+    if(s){
+      interestEl.textContent = money(s.interest);
+      principalEl.textContent = money(s.principal);
+      card.querySelector(".paidThisMonth").textContent = money(s.amt);
+      card.querySelector(".countThisMonth").textContent = String(s.count);
+      card.querySelector(".lastPaid").textContent = s.lastDate || "—";
+    } else {
+      interestEl.textContent = money(0);
+      principalEl.textContent = money(0);
+      card.querySelector(".paidThisMonth").textContent = money(0);
+      card.querySelector(".countThisMonth").textContent = "0";
+      card.querySelector(".lastPaid").textContent = "—";
+    }
+  });
+}
+
+/* ===== Payoff Projection ===== */
+function simulatePayoff(strategy, extraPool){
+  const debts = getDebtsMaster().map(d=>({
+    id: d.id,
+    name: d.name || "Unnamed Debt",
+    apr: Number(d.apr)||0,
+    balance: Number(d.balance)||0,
+    payment: Number(d.payment)||0,
+    extra: Number(d.extra)||0
+  })).filter(d=>d.balance>0);
+
+  if(debts.length === 0){
+    return { months:0, totalInterest:0, order:[], rows:[] };
+  }
+
+  // Order function
+  const orderFn = (a,b)=>{
+    if(strategy==="snowball"){
+      return a.balance - b.balance || b.apr - a.apr;
+    }
+    // avalanche
+    return b.apr - a.apr || a.balance - b.balance;
+  };
+
+  let months = 0;
+  let totalInterest = 0;
+
+  // copy balances
+  const working = debts.map(d=>({...d}));
+
+  // Safety cap
+  const MAX_MONTHS = 600;
+
+  while(working.some(d=>d.balance>0) && months < MAX_MONTHS){
+    months += 1;
+
+    // accrue interest
+    working.forEach(d=>{
+      if(d.balance<=0) return;
+      const interest = d.balance*(d.apr/100/12);
+      totalInterest += interest;
+      d.balance += interest;
+    });
+
+    // pay minimums first
+    working.forEach(d=>{
+      if(d.balance<=0) return;
+      const pay = Math.max(d.payment,0) + Math.max(d.extra,0);
+      if(pay<=0) return;
+      d.balance = Math.max(d.balance - pay, 0);
+    });
+
+    // extra pool by strategy
+    let pool = Math.max(Number(extraPool)||0, 0);
+    while(pool>0.0001){
+      const targets = working.filter(d=>d.balance>0).sort(orderFn);
+      if(targets.length===0) break;
+      const t = targets[0];
+      const chunk = Math.min(pool, t.balance);
+      t.balance = Math.max(t.balance - chunk, iol => 0);
+      pool -= chunk;
+    }
+  }
+
+  const order = debts.sort(orderFn).map(d=>d.name);
+  return { months, totalInterest, order };
+}
+
+function renderPayoff(){
+  const strategy = payoffStrategyEl.value;
+  const extraPool = Number(extraPoolEl.value)||0;
+
+  const debts = getDebtsMaster().map(d=>({
+    name: d.name || "Unnamed Debt",
+    balance: Number(d.balance)||0,
+    apr: Number(d.apr)||0,
+    payment: (Number(d.payment)||0) + (Number(d.extra)||0)
+  })).filter(d=>d.balance>0);
+
+  if(debts.length===0){
+    payoffSummaryEl.textContent = "No active debts";
+    payoffTableEl.innerHTML = `<div class="hdr"><div>Debt</div><div>APR</div><div>Balance</div><div>Payment</div></div>`;
+    return;
+  }
+
+  const sim = simulatePayoff(strategy, extraPool);
+  const yrs = Math.floor(sim.months/12);
+  const mos = sim.months%12;
+  payoffSummaryEl.textContent = `Debt-free in ${yrs ? yrs+"y " : ""}${mos}m • Est. interest ${money(sim.totalInterest)}`;
+
+  // Sort for display
+  const rows = debts.sort((a,b)=>{
+    if(strategy==="snowball"){
+      return a.balance - b.balance || b.apr - a.apr;
+    }
+    return b.apr - a.apr || a.balance - b.balance;
+  });
+
+  payoffTableEl.innerHTML = `
+    <div class="hdr">
+      <div>Debt (strategy order)</div><div>APR</div><div>Balance</div><div>Payment</div>
+    </div>
+    ${rows.map(r=>`
+      <div class="r">
+        <div>${r.name}</div>
+        <div>${(r.apr||0).toFixed(2)}%</div>
+        <div>${money(r.balance)}</div>
+        <div>${money(r.payment)}</div>
+      </div>
+    `).join("")}
+  `;
+}
+
+/* ===== Breakdown ===== */
 function renderBreakdown(start, income, bills, remainingValue){
   $("breakdownContent").innerHTML = `
     <div class="breakdown-line"><span>Starting Balance</span><span>${money(start)}</span></div>
@@ -745,17 +1130,30 @@ function renderBreakdown(start, income, bills, remainingValue){
   `;
 }
 
+/* ===== Update ===== */
 function update(){
+  // First: keep master debts aligned with UI edits
+  syncDebtMasterFromUI();
+
   const start  = Number(startBal.value) || 0;
   const income = sumIncome();
   const bills  = sumBills();
 
+  // Remaining is cashflow only (debt is informational)
   const remainingValue = start + income - bills;
-
   remaining.textContent = money(remainingValue);
 
-  billsT.querySelectorAll("tr").forEach(upsertBillTemplate);
-  applyBillPaymentsToDebt();
+  // Upsert recurring templates from rows that are marked recurring
+  billsT.querySelectorAll("tr").forEach(upsertBillTemplateFromRow);
+
+  // Recompute global debts from baseline + ALL paid linked bills (prevents double-apply, supports revisiting months)
+  recomputeDebtsFromBaselinesAndPayments();
+
+  // Update debt badges and last payment impact
+  renderDebtBadgesAndResults();
+
+  // Payoff projection
+  renderPayoff();
 
   renderBreakdown(start, income, bills, remainingValue);
   $("summary").textContent = "Monthly activity updated.";
@@ -772,46 +1170,51 @@ function save(){
     start: startBal.value || "",
     income: getIncomeData(),
     bills: getBillsData(),
-    debt: getDebtData()
+    // store debt UI snapshot (not the source of truth, master is)
+    debt: getDebtUIData(),
+    payoff: {
+      strategy: payoffStrategyEl.value,
+      extraPool: extraPoolEl.value || ""
+    }
   }));
 }
 
 function load(){
-  lastKey = key(); // this month is now active
+  lastKey = key();
 
   const d = JSON.parse(localStorage.getItem(lastKey) || "{}");
 
-  // 🔑 LOCK IS READ ONLY FROM THIS MONTH
   locked = !!d.locked;
-
   app.classList.toggle("locked", locked);
   lockBtn.textContent = locked ? "🔒 Month Locked" : "🔓 Lock Month";
 
   startBal.value = d.start || "";
 
+  // Restore payoff UI preferences
+  if(d.payoff?.strategy) payoffStrategyEl.value = d.payoff.strategy;
+  extraPoolEl.value = d.payoff?.extraPool || "";
+
   clear(incomeT);
   clear(billsT);
-  clear(debtT);
 
   loadIncomeRows(d.income || []);
-loadDebtRows(d.debt || []);     // ✅ debt first
-loadBillRows(d.bills || []);     // ✅ then bills
-refreshAllDebtSelects();         // ✅ now the dropdowns fill correctly
+  loadBillRows(d.bills || []);
+
+  // Debt loads from master (carry forward); seed master from month snapshot if needed
+  loadDebtFromMasterOrMonth(d.debt || []);
+
+  // Templates UI
+  renderTemplatesUI();
 
   update();
-renderTemplatesUI();
   setDebug(`Loaded ${yearSel.value}-${Number(monthSel.value) + 1} ✅`);
 }
 
-/* ===== Recurring bill templates UI ===== */
-function uid(){
-  return "t_" + Math.random().toString(36).slice(2, 10);
-}
-
+/* ===== Templates UI ===== */
 function renderTemplatesUI(){
   const templates = getBillTemplates();
-
   templatesEl.innerHTML = "";
+
   if(templates.length === 0){
     templatesEl.innerHTML = `<div style="color:var(--muted); font-size:13px;">No recurring bills yet.</div>`;
     return;
@@ -831,7 +1234,6 @@ function renderTemplatesUI(){
       <span class="remove" title="Remove">×</span>
     `;
 
-    // Change handlers
     row.querySelectorAll("input, select").forEach(el => {
       el.addEventListener("input", () => {
         const updated = getBillTemplates().map(x => {
@@ -840,13 +1242,7 @@ function renderTemplatesUI(){
           const amount = row.querySelector('[data-k="amount"]').value;
           const dueDay = row.querySelector('[data-k="dueDay"]').value;
           const recurring = row.querySelector('[data-k="recurring"]').value === "true";
-          return {
-            ...x,
-            name,
-            amount,
-            dueDay,
-            recurring
-          };
+          return { ...x, name, amount, dueDay, recurring };
         });
         saveBillTemplates(updated);
       });
@@ -861,19 +1257,6 @@ function renderTemplatesUI(){
     templatesEl.appendChild(row);
   });
 }
-
-addTemplateBtn.addEventListener("click", () => {
-  const templates = getBillTemplates();
-  templates.push({
-    id: uid(),
-    name: "",
-    amount: "",
-    dueDay: 1,
-    recurring: true
-  });
-  saveBillTemplates(templates);
-  renderTemplatesUI();
-});
 
 /* ===== Events ===== */
 startBal.addEventListener("input", update);
@@ -899,16 +1282,38 @@ $("addBill").addEventListener("click", () => {
     <td data-label="Paid Date"><input type="date" disabled></td>
     <td data-label="Name"><input></td>
     <td data-label="Amount"><input type="number" inputmode="decimal"></td>
+    <td data-label="Recurring"><input type="checkbox"></td>
+    <td data-label="Linked Debt"><select></select></td>
   `);
+  refreshAllDebtSelects();
   update();
 });
 
 $("addDebt").addEventListener("click", () => {
   setDebug("Add Debt clicked ✅");
   if(locked) return;
-  createDebtCard();
+
+  // Add to master first
+  const debts = getDebtsMaster();
+  const d = { id: uid("debt"), name:"", balance:0, apr:0, payment:0, extra:0 };
+  debts.push(d);
+  saveDebtsMaster(debts);
+
+  // ensure baseline exists
+  ensureBaselines();
+
+  // Render card
+  createDebtCard(d);
   refreshAllDebtSelects();
   update();
+});
+
+addTemplateBtn.addEventListener("click", () => {
+  if(locked) return;
+  const templates = getBillTemplates();
+  templates.push({ id: uid("t"), name: "", amount: "", dueDay: 1, recurring: true });
+  saveBillTemplates(templates);
+  renderTemplatesUI();
 });
 
 lockBtn.addEventListener("click", () => {
@@ -919,10 +1324,12 @@ lockBtn.addEventListener("click", () => {
   setDebug(locked ? "Month locked ✅" : "Month unlocked ✅");
 });
 
+recalcPayoffBtn.addEventListener("click", renderPayoff);
+payoffStrategyEl.addEventListener("change", update);
+extraPoolEl.addEventListener("input", () => { renderPayoff(); save(); });
+
 function handleMonthChange(){
-  // Save current month before switching
   save();
-  // Load newly selected month
   load();
 }
 
