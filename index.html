@@ -545,10 +545,6 @@ function applyBillPaymentsToDebt(){
     const interest = (Number(debt.balance) || 0) * (apr / 100 / 12);
     const principal = Math.max(amount - interest, 0);
 
-    debt.balance = Math.max(
-      Number(debt.balance) - principal,
-      0
-
 const card = [...debtT.querySelectorAll(".debt-card")]
   .find(c => c.dataset.debtId === debtId);
 
@@ -557,6 +553,12 @@ if(card){
   card.querySelector(".principal").textContent = money(principal);
   card.querySelector(".newbal").textContent    = money(debt.balance);
 }
+
+    debt.balance = Math.max(
+      Number(debt.balance) - principal,
+      0
+
+
     );
   });
 
