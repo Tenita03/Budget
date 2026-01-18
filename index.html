@@ -483,6 +483,18 @@ function populateDebtSelect(select, selectedId = ""){
   });
 }
 
+function refreshAllDebtSelects(){
+  // For every bill row that has a linked-debt select:
+  billsT.querySelectorAll('tr').forEach(tr => {
+    const select = tr.querySelector('[data-label="Linked Debt"] select');
+    if(!select) return;
+
+    // Preserve current selection if any
+    const current = select.value || "";
+    populateDebtSelect(select, current);
+  });
+}
+
 function upsertBillTemplate(row){
   const recurring = row.querySelector('[data-label="Recurring"] input');
   if(!recurring || !recurring.checked) return;
@@ -595,7 +607,10 @@ function createDebtCard(data = {}){
     update();
   });
 
-  card.querySelectorAll("input").forEach(i => i.addEventListener("input", update));
+  card.querySelectorAll("input").forEach(i => i.addEventListener("input", () => {
+  refreshAllDebtSelects();   // keep bill dropdowns in sync with debt list/names
+  update();
+}));
 
   debtT.appendChild(card);
 }
@@ -768,8 +783,9 @@ function load(){
   clear(debtT);
 
   loadIncomeRows(d.income || []);
-  loadBillRows(d.bills || []);
-  loadDebtRows(d.debt || []);
+loadDebtRows(d.debt || []);     // ✅ debt first
+loadBillRows(d.bills || []);     // ✅ then bills
+refreshAllDebtSelects();         // ✅ now the dropdowns fill correctly
 
   update();
 renderTemplatesUI();
@@ -880,6 +896,7 @@ $("addDebt").addEventListener("click", () => {
   setDebug("Add Debt clicked ✅");
   if(locked) return;
   createDebtCard();
+  refreshAllDebtSelects();
   update();
 });
 
