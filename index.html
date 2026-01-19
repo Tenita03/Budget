@@ -430,6 +430,8 @@ table tr:hover{ background:#f8fafc; }
 const $ = id => document.getElementById(id);
 const money = n => `$${(Number(n) || 0).toFixed(2)}`;
 
+const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+
 const app      = $("app");
 const debugEl  = $("debug");
 
@@ -725,10 +727,10 @@ function createDebtCard(data = {}){
 
   // Any changes update master + selects
   card.querySelectorAll("input").forEach(i => i.addEventListener("input", () => {
-    syncDebtMasterFromUI();
-    refreshAllDebtSelects();
-    update(); // keep badges & payoff in sync
-  }));
+    card.querySelectorAll("input").forEach(i => i.addEventListener("input", () => {
+  syncDebtMasterFromUI();
+  update();
+}));
 
   debtT.appendChild(card);
 refreshAllBillDebtDropdowns();
@@ -748,12 +750,10 @@ function syncDebtMasterFromUI(){
 
   saveDebtsMaster(cleaned);
 
-  // keep bill dropdowns in sync with debt names/ids
+  // Keep bill dropdowns synced with debt names/ids
   refreshAllBillDebtDropdowns();
 }
-  // ✅ keep bill dropdowns in sync
-  refreshAllDebtSelects();
-}
+
 /* ===== Loaders ===== */
 function loadIncomeRows(data=[]){
   data.forEach(row => {
