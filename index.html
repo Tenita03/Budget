@@ -351,7 +351,14 @@ table tr:hover{ background:#f8fafc; }
       <h2>Bills</h2>
       <span class="section-toggle">Hide</span>
     </div>
-
+<div style="display:flex; gap:10px; align-items:center; margin:8px 0 12px;">
+  <div style="font-size:13px; color:var(--muted); font-weight:600;">Bills count:</div>
+  <select id="billCountMode" style="max-width:220px;">
+    <option value="all">All bills</option>
+    <option value="unpaid">Only unpaid</option>
+    <option value="paid">Only paid</option>
+  </select>
+</div>
     <table>
       <thead>
         <tr>
@@ -436,6 +443,7 @@ const debtT    = $("debt");
 
 const remaining = $("remaining");
 const lockBtn   = $("lockBtn");
+const billCountMode = $("billCountMode");
 
 const templatesEl = $("templates");
 const addTemplateBtn = $("addTemplate");
@@ -606,6 +614,13 @@ function populateDebtSelect(select, selectedId = ""){
   });
 }
 
+function refreshAllBillDebtDropdowns(){
+  billsT.querySelectorAll('td[data-label="Linked Debt"] select').forEach(sel => {
+    const current = sel.value || "";
+    populateDebtSelect(sel, current);
+  });
+}
+
 function refreshAllDebtSelects(){
   const debts = getDebtsMaster();
   billsT.querySelectorAll('select').forEach(sel=>{
@@ -715,6 +730,7 @@ function createDebtCard(data = {}){
   }));
 
   debtT.appendChild(card);
+refreshAllBillDebtDropdowns();
 }
 
 function syncDebtMasterFromUI(){
@@ -836,13 +852,22 @@ function sumIncome(){
 
 function sumBills(){
   let total = 0;
-  billsT.querySelectorAll("tr").forEach(r=>{
-    const amt = Number(r.querySelector('td[data-label="Amount"] input')?.value) || 0;
-    total += amt;
+  const mode = billCountMode ? billCountMode.value : "all";
 
-    const paid = r.querySelector('td[data-label="Paid"] input')?.checked;
+  billsT.querySelectorAll("tr").forEach(r=>{
+    const amt  = Number(r.querySelector('td[data-label="Amount"] input')?.value) || 0;
+    const paid = r.querySelector('td[data-label="Paid"] input')?.checked || false;
+
+    // visual only
     r.style.opacity = paid ? 0.45 : 1;
+
+    // counting logic
+    if (mode === "unpaid" && paid) return;
+    if (mode === "paid" && !paid) return;
+
+    total += amt;
   });
+
   return total;
 }
 
@@ -1313,6 +1338,7 @@ $("addBill").addEventListener("click", () => {
   update();
 });
 
+billCountMode.addEventListener("change", update);
 $("addDebt").addEventListener("click", () => {
   setDebug("Add Debt clicked ✅");
   if(locked) return;
