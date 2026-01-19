@@ -725,15 +725,14 @@ function createDebtCard(data = {}){
     update();
   });
 
-  // Any changes update master + selects
+    // Any changes update master + keep UI in sync
   card.querySelectorAll("input").forEach(i => i.addEventListener("input", () => {
-    card.querySelectorAll("input").forEach(i => i.addEventListener("input", () => {
-  syncDebtMasterFromUI();
-  update();
-}));
+    syncDebtMasterFromUI();
+    update();
+  }));
 
   debtT.appendChild(card);
-refreshAllBillDebtDropdowns();
+  refreshAllBillDebtDropdowns();
 }
 
 function syncDebtMasterFromUI(){
