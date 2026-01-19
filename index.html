@@ -623,7 +623,8 @@ function refreshAllBillDebtDropdowns(){
 
 function refreshAllDebtSelects(){
   const debts = getDebtsMaster();
-  billsT.querySelectorAll('select').forEach(sel=>{
+
+  billsT.querySelectorAll('td[data-label="Linked Debt"] select').forEach(sel=>{
     const current = sel.value || "";
     sel.innerHTML = `<option value="">— None —</option>`;
     debts.forEach(d=>{
@@ -735,21 +736,8 @@ refreshAllBillDebtDropdowns();
 
 function syncDebtMasterFromUI(){
   const ui = getDebtUIData();
-  const cleaned = ui.map(d=>({
-    id: d.id,
-    name: d.name || "",
-    balance: Number(d.balance) || 0,
-    apr: Number(d.apr) || 0,
-    payment: Number(d.payment) || 0,
-    extra: Number(d.extra) || 0
-  }));
-  saveDebtsMaster(cleaned);
-}
 
-function syncDebtMasterFromUI(){
-  const ui = getDebtUIData();
-const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
-  const cleaned = ui.map(d=>({
+  const cleaned = ui.map(d => ({
     id: d.id,
     name: d.name || "",
     balance: round2(d.balance),
@@ -757,8 +745,12 @@ const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
     payment: Number(d.payment) || 0,
     extra: Number(d.extra) || 0
   }));
+
   saveDebtsMaster(cleaned);
 
+  // keep bill dropdowns in sync with debt names/ids
+  refreshAllBillDebtDropdowns();
+}
   // ✅ keep bill dropdowns in sync
   refreshAllDebtSelects();
 }
@@ -1101,14 +1093,18 @@ function simulatePayoff(strategy, extraPool){
     });
 
     // extra pool by strategy
-    let pool = Math.max(Number(extraPool)||0, 0);
-    while(pool>0.0001){
-      const targets = working.filter(d=>d.balance>0).sort(orderFn);
-      if(targets.length===0) break;
-      const t = targets[0];
-      const chunk = Math.min(pool, t.balance = Math.max(t.balance - chunk, 0);
-      pool -= chunk;
-    }
+let pool = Math.max(Number(extraPool)||0, 0);
+
+while(pool > 0.0001){
+  const targets = working.filter(d=>d.balance>0).sort(orderFn);
+  if(targets.length === 0) break;
+
+  const t = targets[0];
+
+  const chunk = Math.min(pool, t.balance);
+  t.balance = Math.max(t.balance - chunk, 0);
+  pool -= chunk;
+}
   }
 
   const order = debts.sort(orderFn).map(d=>d.name);
@@ -1221,7 +1217,6 @@ function save(){
 
 function load(){
   lastKey = key();
-
   const d = JSON.parse(localStorage.getItem(lastKey) || "{}");
 
   locked = !!d.locked;
@@ -1230,30 +1225,27 @@ function load(){
 
   startBal.value = d.start || "";
 
-  // Restore payoff UI preferences
+  // payoff prefs
   if(d.payoff?.strategy) payoffStrategyEl.value = d.payoff.strategy;
   extraPoolEl.value = d.payoff?.extraPool || "";
 
   clear(incomeT);
-clear(billsT);
+  clear(billsT);
 
-// income first is fine
-loadIncomeRows(d.income || []);
+  // income first
+  loadIncomeRows(d.income || []);
 
-// ✅ IMPORTANT: load debts FIRST (so debts-master exists)
-loadDebtFromMasterOrMonth(d.debt || []);
+  // ✅ load debts BEFORE bills so bill dropdowns can populate
+  loadDebtFromMasterOrMonth(d.debt || []);
 
-// ✅ now load bills (their Linked Debt selects will populate correctly)
-loadBillRows(d.bills || []);
+  // now bills
+  loadBillRows(d.bills || []);
 
-// ✅ then templates
-renderTemplatesUI();
-
-update();
-setDebug(`Loaded ${yearSel.value}-${Number(monthSel.value) + 1} ✅`);
-
-  // Templates UI
+  // templates UI
   renderTemplatesUI();
+
+  // ensure selects match latest debts
+  refreshAllBillDebtDropdowns();
 
   update();
   setDebug(`Loaded ${yearSel.value}-${Number(monthSel.value) + 1} ✅`);
