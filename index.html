@@ -16,6 +16,21 @@
   --radius:16px;
   --shadow:0 10px 30px rgba(0,0,0,.06);
 }
+
+table input, table select {
+  color: var(--text);
+}
+
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.wrap, .card {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 *{ box-sizing:border-box; }
 body{
   margin:0;
@@ -288,6 +303,35 @@ table tr:hover{ background:#f8fafc; }
   td[data-label="Linked Debt"] {
     display: none;
   }
+
+@media (max-width: 430px) {
+
+  /* Prevent flex rows from forcing width */
+  tbody td {
+    min-width: 0;
+  }
+
+  /* Make label + field share space nicely */
+  tbody td::before {
+    flex: 0 0 42%;
+    min-width: 0;
+  }
+
+  /* Inputs/selects must not force the page wider */
+  tbody td input,
+  tbody td select {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 58%;
+  }
+
+  /* Bill Name: give it a little more room + ensure text is visible */
+  td[data-label="Name"] input {
+    max-width: 64%;
+    color: var(--text);
+    background: #fff;
+  }
+}
 
   table {
     width: 100%;
