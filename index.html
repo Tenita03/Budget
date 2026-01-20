@@ -87,6 +87,22 @@ table{
   border-collapse:collapse;
   table-layout:fixed;
 }
+
+.remove-btn{
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: #ef4444;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.remove-btn:active{
+  transform: scale(0.98);
+}
+
 th, td{
   padding:8px;
   border-bottom:1px solid var(--line);
@@ -271,7 +287,28 @@ table tr:hover{ background:#f8fafc; }
   .payoff-row{ grid-template-columns:1fr; }
 }
 
-@media (max-width: 430px) {
+@media (max-width: 430px){
+
+  /* Give the NAME row full width by stacking label above input */
+  td[data-label="Name"]{
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  td[data-label="Name"]::before{
+    flex: none;
+  }
+
+  td[data-label="Name"] input{
+    max-width: 100% !important;
+    width: 100% !important;
+    min-width: 0;
+  }
+
+}
+
+{
   thead { display:none; }
 
   tbody tr{
@@ -600,16 +637,22 @@ function addRow(tbody, cellsHtml, opts = {}){
   const tr = document.createElement("tr");
   tr.dataset.templateId = opts.templateId ? String(opts.templateId) : "";
   tr.dataset.rowId = opts.rowId || uid(tbody === billsT ? "bill" : "inc");
-  tr.innerHTML = cellsHtml + `<td><span class="remove" title="Remove">×</span></td>`;
+  tr.innerHTML = cellsHtml + `
+  <td data-label="Remove">
+    <button type="button" class="remove-btn" aria-label="Remove">×</button>
+  </td>
+`;
 
-  const removeBtn = tr.querySelector(".remove");
-  if(removeBtn){
-    removeBtn.addEventListener("click", () => {
-      if(locked) return;
-      tr.remove();
-      update();
-    });
-  }
+  const removeBtn = tr.querySelector(".remove-btn");
+if(removeBtn){
+  removeBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if(locked) return;
+    tr.remove();
+    update();
+  });
+}
 
   // Wire inputs/selects
   tr.querySelectorAll("input, select").forEach(el => {
