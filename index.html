@@ -26,6 +26,10 @@ html, body {
   overflow-x: hidden;
 }
 
+.remove-btn{
+  touch-action: manipulation;
+}
+
 .wrap, .card {
   max-width: 100%;
   overflow-x: hidden;
@@ -289,26 +293,6 @@ table tr:hover{ background:#f8fafc; }
 
 @media (max-width: 430px){
 
-  /* Give the NAME row full width by stacking label above input */
-  td[data-label="Name"]{
-    flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
-  }
-
-  td[data-label="Name"]::before{
-    flex: none;
-  }
-
-  td[data-label="Name"] input{
-    max-width: 100% !important;
-    width: 100% !important;
-    min-width: 0;
-  }
-
-}
-
-{
   thead { display:none; }
 
   tbody tr{
@@ -328,20 +312,58 @@ table tr:hover{ background:#f8fafc; }
     gap:12px;
     padding:6px 0;
     border:none;
+    min-width:0;
   }
 
   tbody td::before{
     content: attr(data-label);
     font-weight:700;
     font-size:13px;
+    flex:0 0 42%;
+    min-width:0;
   }
 
+  tbody td input,
+  tbody td select{
+    flex:1 1 auto;
+    min-width:0;
+    max-width:58%;
+  }
+
+  /* Bill Name: stacked so it never disappears */
+  td[data-label="Name"]{
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  td[data-label="Name"]::before{
+    flex:none;
+  }
+  td[data-label="Name"] input{
+    width:100% !important;
+    max-width:100% !important;
+  }
+
+  /* Linked Debt + Recurring hidden on mobile */
   td[data-label="Recurring"],
-  td[data-label="Linked Debt"] {
-    display: none;
+  td[data-label="Linked Debt"]{
+    display:none;
   }
 
-@media (max-width: 430px) {
+  /* Remove button: keep visible and tappable */
+  td[data-label="Remove"]{
+    justify-content:flex-end;
+  }
+  td[data-label="Remove"]::before{
+    content:"";
+    flex:0 0 0;
+  }
+
+  table{
+    width:100%;
+    overflow-x:hidden;
+  }
+}
 
   /* Prevent flex rows from forcing width */
   tbody td {
