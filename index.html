@@ -150,6 +150,7 @@ table tr:hover{ background:#f8fafc; }
 .locked #debt input,
 .locked #debt select,
 .locked .remove,
+.locked .remove-btn,
 .locked .debt-remove,
 .locked #addIncome,
 .locked #addBill,
@@ -344,7 +345,7 @@ table tr:hover{ background:#f8fafc; }
     max-width:100% !important;
   }
 
-  /* Linked Debt + Recurring hidden on mobile */
+  /* Hide Recurring + Linked Debt on mobile */
   td[data-label="Recurring"],
   td[data-label="Linked Debt"]{
     display:none;
@@ -1488,6 +1489,20 @@ yearSel.addEventListener("change", handleMonthChange);
 
 /* Boot */
 load();
+
+// Robust remove handler (works for all bill rows, even after re-renders)
+billsT.addEventListener("click", (e) => {
+  const btn = e.target.closest(".remove-btn");
+  if(!btn) return;
+  e.preventDefault();
+  e.stopPropagation();
+  if(locked) return;
+  const tr = btn.closest("tr");
+  if(tr){
+    tr.remove();
+    update();
+  }
+});
 </script>
 </body>
 </html>
