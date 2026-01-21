@@ -121,6 +121,17 @@ table input, table select{
 }
 table tr:hover{ background:#f8fafc; }
 
+td[data-label="Remove"]{
+  overflow: visible;
+}
+
+td[data-label="Name"]{
+  overflow: visible;
+}
+td[data-label="Name"] input{
+  min-width: 140px;
+}
+
 .remove{ cursor:pointer; color:#94a3b8; font-size:18px; user-select:none; }
 .remove:hover{ color:#ef4444; }
 
@@ -433,17 +444,18 @@ table tr:hover{ background:#f8fafc; }
   </select>
 </div>
     <table>
-      <thead>
-        <tr>
-          <th style="width:44px;">✔</th>
-          <th style="width:28%;">Due</th>
-          <th style="width:28%;">Paid</th>
-          <th>Name</th>
-          <th style="width:18%;">Amount</th>
-          <th style="width:18%;">Linked Debt</th>
-          <th style="width:36px;"></th>
-        </tr>
-      </thead>
+    <thead>
+  <tr>
+    <th style="width:44px;">✔</th>
+    <th style="width:22%;">Due</th>
+    <th style="width:22%;">Paid</th>
+    <th>Name</th>
+    <th style="width:14%;">Amount</th>
+    <th style="width:90px;">Recurring</th>
+    <th style="width:18%;">Linked Debt</th>
+    <th style="width:44px;"></th>
+  </tr>
+</thead>
       <tbody id="bills"></tbody>
     </table>
 
