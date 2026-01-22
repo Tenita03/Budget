@@ -785,22 +785,22 @@ function createDebtCard(data = {}){
 
     <div class="debt-field">
       <label>Balance</label>
-      <input type="number" inputmode="decimal" value="${data.balance || ""}">
+      <input class="balance-input" type="number" inputmode="decimal" value="${data.balance ?? ""}">
     </div>
 
     <div class="debt-field">
       <label>APR %</label>
-      <input type="number" inputmode="decimal" value="${data.apr || ""}">
+      <input type="number" inputmode="decimal" value="${data.apr ?? ""}">
     </div>
 
     <div class="debt-field">
       <label>Payment</label>
-      <input type="number" inputmode="decimal" value="${data.payment || ""}">
+      <input type="number" inputmode="decimal" value="${data.payment ?? ""}">
     </div>
 
     <div class="debt-field">
       <label>Extra</label>
-      <input type="number" inputmode="decimal" value="${data.extra || ""}">
+      <input type="number" inputmode="decimal" value="${data.extra ?? ""}">
     </div>
 
     <div class="debt-results">
@@ -818,31 +818,55 @@ function createDebtCard(data = {}){
     <button class="debt-remove" type="button">Remove Debt</button>
   `;
 
+  const inputs = card.querySelectorAll("input");
+  const nameInput = inputs[0];
+  const balInput  = inputs[1]; // .balance-input
+  const aprInput  = inputs[2];
+  const payInput  = inputs[3];
+  const extraInput= inputs[4];
+
+  // ✅ Balance should update baseline immediately so recompute won't "erase" it
+  const handleBalanceChange = () => {
+    if(locked) return;
+    setDebtBaseline(card.dataset.debtId, balInput.value);
+    // recompute + refresh UI
+    update();
+  };
+
+  // On mobile Safari, "change" can be finicky; input keeps it stable.
+  balInput.addEventListener("input", handleBalanceChange);
+  balInput.addEventListener("change", handleBalanceChange);
+  balInput.addEventListener("blur", handleBalanceChange);
+
+  // Other fields just sync master + update
+  [nameInput, aprInput, payInput, extraInput].forEach(el => {
+    el.addEventListener("input", () => {
+      if(locked) return;
+      syncDebtMasterFromUI();  // keeps names/APR/payment current
+      update();
+    });
+    el.addEventListener("change", () => {
+      if(locked) return;
+      syncDebtMasterFromUI();
+      update();
+    });
+  });
+
   card.querySelector(".debt-remove").addEventListener("click", () => {
     if(locked) return;
 
     const id = card.dataset.debtId;
+
     // remove from master
     const debts = getDebtsMaster().filter(d => String(d.id) !== String(id));
     saveDebtsMaster(debts);
 
-const balanceInput = card.querySelectorAll("input")[1];
+    // remove baseline too
+    const baselines = getDebtBaselines();
+    delete baselines[id];
+    saveDebtBaselines(baselines);
 
-// When user finishes editing Balance, treat it as the new baseline
-balanceInput.addEventListener("change", () => {
-  if(locked) return;
-  setDebtBaseline(card.dataset.debtId, balanceInput.value);
-  update();
-});
-
-// Optional: also update baseline on blur (feels nicer on mobile)
-balanceInput.addEventListener("blur", () => {
-  if(locked) return;
-  setDebtBaseline(card.dataset.debtId, balanceInput.value);
-  update();
-});
-
-    // unlink any bills that pointed to it (in current UI only; persisted on save)
+    // unlink bills that pointed to it (UI now; persists on save())
     billsT.querySelectorAll('tr').forEach(tr=>{
       const sel = tr.querySelector('td[data-label="Linked Debt"] select');
       if(sel && String(sel.value) === String(id)) sel.value = "";
@@ -852,6 +876,10 @@ balanceInput.addEventListener("blur", () => {
     refreshAllDebtSelects();
     update();
   });
+
+  debtT.appendChild(card);
+  refreshAllBillDebtDropdowns();
+}
 
     // Any changes update master + keep UI in sync
   card.querySelectorAll("input").forEach(i => i.addEventListener("input", () => {
@@ -865,19 +893,22 @@ balanceInput.addEventListener("blur", () => {
 
 function syncDebtMasterFromUI(){
   const ui = getDebtUIData();
+  const master = getDebtsMaster();
 
-  const cleaned = ui.map(d => ({
-    id: d.id,
-    name: d.name || "",
-    balance: round2(d.balance),
-    apr: Number(d.apr) || 0,
-    payment: Number(d.payment) || 0,
-    extra: Number(d.extra) || 0
-  }));
+  const merged = ui.map(d => {
+    const existing = master.find(m => String(m.id) === String(d.id)) || {};
+    return {
+      id: d.id,
+      name: d.name || "",
+      // ✅ DON'T overwrite balance here—baseline+recompute owns it
+      balance: Number(existing.balance) || 0,
+      apr: Number(d.apr) || 0,
+      payment: Number(d.payment) || 0,
+      extra: Number(d.extra) || 0
+    };
+  });
 
-  saveDebtsMaster(cleaned);
-
-  // Keep bill dropdowns synced with debt names/ids
+  saveDebtsMaster(merged);
   refreshAllBillDebtDropdowns();
 }
 
