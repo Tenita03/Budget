@@ -551,6 +551,9 @@ const payoffSummaryEl = $("payoffSummary");
 let locked = false;
 let lastKey = null;
 
+let computedDebtsThisMonth = [];
+let computedDebtsStartOfMonth = [];
+
 function setDebug(msg){
   debugEl.innerHTML = `Status: <strong>${msg}</strong>`;
 }
@@ -1048,6 +1051,7 @@ function allMonthKeys(){
 }
 
 function collectAllPaidLinkedPayments(){
+  // returns array of {debtId, amount, y, m, dateISO, billId}
   const out = [];
   const keys = allMonthKeys();
   const meta = getDebtBaselineMeta();
@@ -1078,13 +1082,15 @@ function collectAllPaidLinkedPayments(){
       out.push({
         debtId: b.linkedDebtId,
         amount: amt,
+        y, m,
         dateISO: date || "9999-12-31",
         billId: b.id || uid("bill")
       });
     });
   });
 
-  out.sort((a,b)=> String(a.dateISO).localeCompare(String(b.dateISO)));
+  // stable-ish ordering
+  out.sort((a,b)=> (a.y - b.y) || (a.m - b.m) || String(a.dateISO).localeCompare(String(b.dateISO)));
   return out;
 }
 
@@ -1117,79 +1123,89 @@ function ensureBaselines(){
   return baselines;
 }
 
-function recomputeDebtsFromBaselinesAndPayments(){
+function computeDebtsUpToMonth(limitY, limitM, inclusive){
   const baselines = ensureBaselines();
-  const debts = getDebtsMaster().map(d=>({...d}));
 
-  // Reset to baseline
-  debts.forEach(d=>{
-    d.balance = round2(baselines[d.id]);
-  });
+  // Start from baselines
+  const debts = getDebtsMaster().map(d=>({
+    ...d,
+    balance: round2(baselines[d.id] ?? 0)
+  }));
 
   const payments = collectAllPaidLinkedPayments();
 
-  // Apply each payment sequentially (monthly interest approximation)
   payments.forEach(p=>{
-    const d = debts.find(x=>String(x.id)===String(p.debtId));
+    const beforeLimit =
+      (p.y < limitY) ||
+      (p.y === limitY && p.m < limitM) ||
+      (inclusive && p.y === limitY && p.m === limitM);
+
+    if(!beforeLimit) return;
+
+    const d = debts.find(x => String(x.id) === String(p.debtId));
     if(!d) return;
 
     const bal = Number(d.balance) || 0;
     const apr = Number(d.apr) || 0;
 
-    const interest = bal * (apr/100/12);
+    const interest  = bal * (apr / 100 / 12);
     const principal = Math.max(p.amount - interest, 0);
 
     d.balance = round2(Math.max(bal - principal, 0));
   });
 
-  saveDebtsMaster(debts);
+  return debts;
+}
 
-  // Update UI fields for balances (without fighting the user while typing)
-debtT.querySelectorAll(".debt-card").forEach(card=>{
-  const id = card.dataset.debtId;
-  const d = debts.find(x=>String(x.id)===String(id));
-  if(!d) return;
+function function recomputeDebtsFromBaselinesAndPayments(){
+  const y = Number(yearSel.value);
+  const m = Number(monthSel.value);
 
-  const inputs = card.querySelectorAll("input");
-  const balInput = inputs[1]; // Balance field
+  // Start-of-month = after prior months
+  computedDebtsStartOfMonth = computeDebtsUpToMonth(y, m, false);
 
-  // If the user is actively editing Balance, don't overwrite it.
-  if(document.activeElement === balInput) return;
+  // End-of-month = after this month too
+  computedDebtsThisMonth = computeDebtsUpToMonth(y, m, true);
 
-  balInput.value = round2(d.balance);
-});
+  // ✅ IMPORTANT: do NOT write computed balances back into the Balance input.
+  // That input is the "baseline" the user typed.
+  // We only use computedDebtsThisMonth for New Balance + payoff.
 
   refreshAllDebtSelects();
 }
 
 function monthPaidLinkedStats(){
-  // stats just for current month selection
   const month = JSON.parse(localStorage.getItem(key()) || "{}");
   const bills = month.bills || [];
 
-  const stats = {}; // debtId -> {amt,count,lastDate,interest,principal,newBalance}
+  const stats = {}; // debtId -> {amt,count,lastDate,interest,principal}
+
   bills.forEach(b=>{
     if(!b || !b.paid || !b.linkedDebtId) return;
     const amt = Number(b.amount) || 0;
     if(amt <= 0) return;
+
     const id = b.linkedDebtId;
     stats[id] = stats[id] || {amt:0,count:0,lastDate:"—",interest:0,principal:0};
     stats[id].amt += amt;
     stats[id].count += 1;
+
     const dt = b.paidDate || b.dueDate || "";
-    if(dt && (stats[id].lastDate==="—" || String(dt) > String(stats[id].lastDate))) stats[id].lastDate = dt;
+    if(dt && (stats[id].lastDate==="—" || String(dt) > String(stats[id].lastDate))){
+      stats[id].lastDate = dt;
+    }
   });
 
-  // compute interest/principal for this month’s total (approx on current balance BEFORE month? we'll use baseline-ish: current balance + principal)
-  const debts = getDebtsMaster();
+  // Use start-of-month balance for interest math
   Object.keys(stats).forEach(debtId=>{
-    const d = debts.find(x=>String(x.id)===String(debtId));
-    if(!d) return;
-    const bal = Number(d.balance) || 0;
-    const apr = Number(d.apr) || 0;
-    const interest = bal * (apr/100/12);
+    const start = computedDebtsStartOfMonth.find(x=>String(x.id)===String(debtId));
+    const bal = Number(start?.balance) || 0;
+    const apr = Number(start?.apr) || 0;
+
+    const interest  = bal * (apr/100/12);
     const principal = Math.max(stats[debtId].amt - interest, 0);
-    stats[debtId].interest = interest;
+
+    stats[debtId].interest  = interest;
     stats[debtId].principal = principal;
   });
 
@@ -1198,7 +1214,7 @@ function monthPaidLinkedStats(){
 
 function renderDebtBadgesAndResults(){
   const stats = monthPaidLinkedStats();
-  const debts = getDebtsMaster();
+  const debts = computedDebtsThisMonth.length ? computedDebtsThisMonth : getDebtsMaster();
 
   debtT.querySelectorAll(".debt-card").forEach(card=>{
     const id = card.dataset.debtId;
@@ -1230,7 +1246,8 @@ function renderDebtBadgesAndResults(){
 
 /* ===== Payoff Projection ===== */
 function simulatePayoff(strategy, extraPool){
-  const debts = getDebtsMaster().map(d=>({
+  const base = computedDebtsThisMonth.length ? computedDebtsThisMonth : getDebtsMaster();
+const debts = base.map(d=>({
     id: d.id,
     name: d.name || "Unnamed Debt",
     apr: Number(d.apr)||0,
@@ -1303,7 +1320,8 @@ function renderPayoff(){
   const strategy = payoffStrategyEl.value;
   const extraPool = Number(extraPoolEl.value)||0;
 
-  const debts = getDebtsMaster().map(d=>({
+  const base = computedDebtsThisMonth.length ? computedDebtsThisMonth : getDebtsMaster();
+const debts = base.map(d=>({
     name: d.name || "Unnamed Debt",
     balance: Number(d.balance)||0,
     apr: Number(d.apr)||0,
