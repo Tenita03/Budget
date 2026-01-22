@@ -606,8 +606,7 @@ function setDebtBaseline(debtId, newBalance){
 
   // ✅ Cutoff: start applying payments AFTER the month you set the baseline
   const meta = getDebtBaselineMeta();
-  const nm = nextMonth(yearSel.value, monthSel.value);
-  meta[debtId] = { cutY: nm.y, cutM: nm.m };
+  meta[debtId] = { cutY: Number(yearSel.value), cutM: Number(monthSel.value) };
   saveDebtBaselineMeta(meta);
 
   // Update master immediately so UI stays consistent
@@ -741,7 +740,7 @@ if(removeBtn){
 
 function populateDebtSelect(select, selectedId = ""){
   if(!select) return;
-  const debts = getDebtsMaster();
+  const debts = (computedDebtsThisMonth.length ? computedDebtsThisMonth : getDebtsMaster());
   select.innerHTML = `<option value="">— None —</option>`;
   debts.forEach(d => {
     const opt = document.createElement("option");
@@ -760,7 +759,7 @@ function refreshAllBillDebtDropdowns(){
 }
 
 function refreshAllDebtSelects(){
-  const debts = getDebtsMaster();
+  const debts = (computedDebtsThisMonth.length ? computedDebtsThisMonth : getDebtsMaster());
 
   billsT.querySelectorAll('td[data-label="Linked Debt"] select').forEach(sel=>{
     const current = sel.value || "";
@@ -1157,7 +1156,7 @@ function computeDebtsUpToMonth(limitY, limitM, inclusive){
   return debts;
 }
 
-function function recomputeDebtsFromBaselinesAndPayments(){
+function recomputeDebtsFromBaselinesAndPayments(){
   const y = Number(yearSel.value);
   const m = Number(monthSel.value);
 
