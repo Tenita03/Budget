@@ -601,13 +601,34 @@ function setDebtBaseline(debtId, newBalance){
   baselines[debtId] = Number(newBalance) || 0;
   saveDebtBaselines(baselines);
 
-  // Also update master immediately so UI & dropdowns stay consistent
+  // ✅ Cutoff: start applying payments AFTER the month you set the baseline
+  const meta = getDebtBaselineMeta();
+  const nm = nextMonth(yearSel.value, monthSel.value);
+  meta[debtId] = { cutY: nm.y, cutM: nm.m };
+  saveDebtBaselineMeta(meta);
+
+  // Update master immediately so UI stays consistent
   const debts = getDebtsMaster().map(d =>
     String(d.id) === String(debtId)
       ? { ...d, balance: round2(newBalance) }
       : d
   );
   saveDebtsMaster(debts);
+}
+
+function getDebtBaselineMeta(){
+  return JSON.parse(localStorage.getItem("debt-baseline-meta") || "{}");
+}
+function saveDebtBaselineMeta(meta){
+  localStorage.setItem("debt-baseline-meta", JSON.stringify(meta));
+}
+
+// month increment helper
+function nextMonth(y, m){
+  m = Number(m);
+  y = Number(y);
+  if(m >= 11) return { y: y + 1, m: 0 };
+  return { y, m: m + 1 };
 }
 
 function toggleSection(header){
@@ -1027,18 +1048,32 @@ function allMonthKeys(){
 }
 
 function collectAllPaidLinkedPayments(){
-  // returns array of {debtId, amount, dateISO, billId}
   const out = [];
   const keys = allMonthKeys();
+  const meta = getDebtBaselineMeta();
+
   keys.forEach(k=>{
+    // k is like "stable-2026-0"
+    const parts = k.split("-");
+    const y = Number(parts[1]);
+    const m = Number(parts[2]);
+
     const d = JSON.parse(localStorage.getItem(k) || "{}");
     const bills = d.bills || [];
+
     bills.forEach(b=>{
-      if(!b) return;
-      if(!b.paid) return;
-      if(!b.linkedDebtId) return;
+      if(!b || !b.paid || !b.linkedDebtId) return;
+
+      // ✅ apply cutoff per-debt
+      const cut = meta[b.linkedDebtId];
+      if(cut){
+        if(y < cut.cutY) return;
+        if(y === cut.cutY && m < cut.cutM) return;
+      }
+
       const amt = Number(b.amount) || 0;
       if(amt <= 0) return;
+
       const date = b.paidDate || b.dueDate || "";
       out.push({
         debtId: b.linkedDebtId,
@@ -1048,7 +1083,7 @@ function collectAllPaidLinkedPayments(){
       });
     });
   });
-  // chronological (rough)
+
   out.sort((a,b)=> String(a.dateISO).localeCompare(String(b.dateISO)));
   return out;
 }
