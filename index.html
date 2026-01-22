@@ -596,6 +596,20 @@ function key(){
   return `stable-${yearSel.value}-${monthSel.value}`;
 }
 
+function setDebtBaseline(debtId, newBalance){
+  const baselines = getDebtBaselines();
+  baselines[debtId] = Number(newBalance) || 0;
+  saveDebtBaselines(baselines);
+
+  // Also update master immediately so UI & dropdowns stay consistent
+  const debts = getDebtsMaster().map(d =>
+    String(d.id) === String(debtId)
+      ? { ...d, balance: round2(newBalance) }
+      : d
+  );
+  saveDebtsMaster(debts);
+}
+
 function toggleSection(header){
   const card = header.closest(".card");
   const label = header.querySelector(".section-toggle");
@@ -811,6 +825,22 @@ function createDebtCard(data = {}){
     // remove from master
     const debts = getDebtsMaster().filter(d => String(d.id) !== String(id));
     saveDebtsMaster(debts);
+
+const balanceInput = card.querySelectorAll("input")[1];
+
+// When user finishes editing Balance, treat it as the new baseline
+balanceInput.addEventListener("change", () => {
+  if(locked) return;
+  setDebtBaseline(card.dataset.debtId, balanceInput.value);
+  update();
+});
+
+// Optional: also update baseline on blur (feels nicer on mobile)
+balanceInput.addEventListener("blur", () => {
+  if(locked) return;
+  setDebtBaseline(card.dataset.debtId, balanceInput.value);
+  update();
+});
 
     // unlink any bills that pointed to it (in current UI only; persisted on save)
     billsT.querySelectorAll('tr').forEach(tr=>{
@@ -1058,15 +1088,20 @@ function recomputeDebtsFromBaselinesAndPayments(){
 
   saveDebtsMaster(debts);
 
-  // Update UI fields for balances (without triggering loops)
-  debtT.querySelectorAll(".debt-card").forEach(card=>{
-    const id = card.dataset.debtId;
-    const d = debts.find(x=>String(x.id)===String(id));
-    if(!d) return;
-    const inputs = card.querySelectorAll("input");
-    // Balance is inputs[1]
-   inputs[1].value = round2(d.balance);
-  });
+  // Update UI fields for balances (without fighting the user while typing)
+debtT.querySelectorAll(".debt-card").forEach(card=>{
+  const id = card.dataset.debtId;
+  const d = debts.find(x=>String(x.id)===String(id));
+  if(!d) return;
+
+  const inputs = card.querySelectorAll("input");
+  const balInput = inputs[1]; // Balance field
+
+  // If the user is actively editing Balance, don't overwrite it.
+  if(document.activeElement === balInput) return;
+
+  balInput.value = round2(d.balance);
+});
 
   refreshAllDebtSelects();
 }
