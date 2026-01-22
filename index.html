@@ -599,10 +599,49 @@ function key(){
   return `stable-${yearSel.value}-${monthSel.value}`;
 }
 
+function getDebtBaselineHistory(){
+  return JSON.parse(localStorage.getItem("debt-baseline-history") || "{}");
+}
+function saveDebtBaselineHistory(h){
+  localStorage.setItem("debt-baseline-history", JSON.stringify(h));
+}
+
+function ymLessOrEq(y1,m1,y2,m2){
+  return (y1 < y2) || (y1 === y2 && m1 <= m2);
+}
+
+function getBaselineForMonth(debtId, y, m){
+  const hist = getDebtBaselineHistory();
+  const arr = (hist[debtId] || []).slice().sort((a,b)=> (a.y-b.y) || (a.m-b.m));
+
+  // pick latest baseline <= (y,m)
+  let chosen = null;
+  for(const b of arr){
+    if(ymLessOrEq(b.y, b.m, y, m)) chosen = b;
+    else break;
+  }
+  return chosen; // {y,m,balance} or null
+}
+
+function upsertBaselineForCurrentMonth(debtId, balance){
+  const y = Number(yearSel.value);
+  const m = Number(monthSel.value);
+
+  const hist = getDebtBaselineHistory();
+  const arr = hist[debtId] || [];
+
+  const idx = arr.findIndex(b => b.y === y && b.m === m);
+  const entry = { y, m, balance: round2(balance) };
+
+  if(idx >= 0) arr[idx] = entry;
+  else arr.push(entry);
+
+  hist[debtId] = arr;
+  saveDebtBaselineHistory(hist);
+}
+
 function setDebtBaseline(debtId, newBalance){
-  const baselines = getDebtBaselines();
-  baselines[debtId] = Number(newBalance) || 0;
-  saveDebtBaselines(baselines);
+  upsertBaselineForCurrentMonth(debtId, Number(newBalance) || 0);
 
   // ✅ Cutoff: start applying payments AFTER the month you set the baseline
   const meta = getDebtBaselineMeta();
@@ -1123,13 +1162,11 @@ function ensureBaselines(){
 }
 
 function computeDebtsUpToMonth(limitY, limitM, inclusive){
-  const baselines = ensureBaselines();
-
-  // Start from baselines
-  const debts = getDebtsMaster().map(d=>({
-    ...d,
-    balance: round2(baselines[d.id] ?? 0)
-  }));
+  const debts = getDebtsMaster().map(d=>{
+  const b = getBaselineForMonth(d.id, limitY, limitM);
+  const startBal = (b ? b.balance : (Number(d.balance) || 0));
+  return { ...d, balance: round2(startBal) };
+});
 
   const payments = collectAllPaidLinkedPayments();
 
