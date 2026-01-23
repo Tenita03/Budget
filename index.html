@@ -1024,7 +1024,15 @@ function loadDebtFromMasterOrMonth(monthDebtSnapshot=[]){
     saveDebtsMaster(master);
   }
 
-  // Render from master
+  // Seed missing baseline entries for this month (keeps months stable)
+getDebtsMaster().forEach(d=>{
+  const y = Number(yearSel.value);
+  const m = Number(monthSel.value);
+  const b = getBaselineForMonth(d.id, y, m);
+  if(!b) upsertBaselineForCurrentMonth(d.id, Number(d.balance) || 0);
+});
+
+// Render from master
   clear(debtT);
   getDebtsMaster().forEach(d => createDebtCard(d));
   refreshAllDebtSelects();
@@ -1077,26 +1085,6 @@ function allMonthKeys(){
   return keys.sort();
 }
 
-
-      const amt = Number(b.amount) || 0;
-      if(amt <= 0) return;
-
-      const date = b.paidDate || b.dueDate || "";
-      out.push({
-        debtId: b.linkedDebtId,
-        amount: amt,
-        y, m,
-        dateISO: date || "9999-12-31",
-        billId: b.id || uid("bill")
-      });
-    });
-  });
-
-  // stable-ish ordering
-  out.sort((a,b)=> (a.y - b.y) || (a.m - b.m) || String(a.dateISO).localeCompare(String(b.dateISO)));
-  return out;
-}
-
 function collectAllPaidLinkedPayments(){
   // returns array of {debtId, amount, y, m, dateISO, billId}
   const out = [];
@@ -1131,20 +1119,6 @@ function collectAllPaidLinkedPayments(){
   return out;
 }
 
-// Store baseline starting balances to make recompute deterministic
-
-
-  });
-  // Remove baselines for deleted debts
-  Object.keys(baselines).forEach(id=>{
-    if(!debts.some(d=>String(d.id)===String(id))){
-      delete baselines[id];
-      changed = true;
-    }
-  });
-  if(changed) (baselines);
-  return baselines;
-}
 
 function computeDebtsUpToMonth(limitY, limitM, inclusive){
   // Start from each debt’s latest baseline at/before (limitY, limitM).
