@@ -582,6 +582,51 @@ function saveDebtsMaster(debts){
   localStorage.setItem("debts-master", JSON.stringify(debts));
 }
 
+/* ===== Baseline History (per debt, per month) =====
+   We store statement balances by month so prior months never change.
+   Key: "debt-baseline-history"
+   Shape: { [debtId]: [ { y: 2026, m: 0, balance: 15042.09 }, ... ] }
+*/
+function getDebtBaselineHistory(){
+  return JSON.parse(localStorage.getItem("debt-baseline-history") || "{}");
+}
+function saveDebtBaselineHistory(h){
+  localStorage.setItem("debt-baseline-history", JSON.stringify(h));
+}
+
+function ymLessOrEq(y1, m1, y2, m2){
+  return (y1 < y2) || (y1 === y2 && m1 <= m2);
+}
+
+function getBaselineForMonth(debtId, y, m){
+  const hist = getDebtBaselineHistory();
+  const arr = (hist[debtId] || []).slice().sort((a,b)=> (a.y-b.y) || (a.m-b.m));
+
+  let chosen = null;
+  for(const b of arr){
+    if(ymLessOrEq(b.y, b.m, y, m)) chosen = b;
+    else break;
+  }
+  return chosen; // {y,m,balance} or null
+}
+
+function upsertBaselineForCurrentMonth(debtId, balance){
+  const y = Number(yearSel.value);
+  const m = Number(monthSel.value);
+
+  const hist = getDebtBaselineHistory();
+  const arr = hist[debtId] || [];
+
+  const entry = { y, m, balance: round2(balance) };
+  const idx = arr.findIndex(b => b.y === y && b.m === m);
+
+  if(idx >= 0) arr[idx] = entry;
+  else arr.push(entry);
+
+  hist[debtId] = arr;
+  saveDebtBaselineHistory(hist);
+}
+
 /* Month / Year */
 (function initMonthYear(){
   const now = new Date();
@@ -641,12 +686,8 @@ function upsertBaselineForCurrentMonth(debtId, balance){
 }
 
 function setDebtBaseline(debtId, newBalance){
+  // Save this month's statement balance (month-specific baseline)
   upsertBaselineForCurrentMonth(debtId, Number(newBalance) || 0);
-
-  // ✅ Cutoff: start applying payments AFTER the month you set the baseline
-  const meta = getDebtBaselineMeta();
-  meta[debtId] = { cutY: Number(yearSel.value), cutM: Number(monthSel.value) };
-  saveDebtBaselineMeta(meta);
 
   // Update master immediately so UI stays consistent
   const debts = getDebtsMaster().map(d =>
@@ -655,13 +696,6 @@ function setDebtBaseline(debtId, newBalance){
       : d
   );
   saveDebtsMaster(debts);
-}
-
-function getDebtBaselineMeta(){
-  return JSON.parse(localStorage.getItem("debt-baseline-meta") || "{}");
-}
-function saveDebtBaselineMeta(meta){
-  localStorage.setItem("debt-baseline-meta", JSON.stringify(meta));
 }
 
 // month increment helper
@@ -923,10 +957,10 @@ function createDebtCard(data = {}){
     const debts = getDebtsMaster().filter(d => String(d.id) !== String(id));
     saveDebtsMaster(debts);
 
-    // remove baseline too
-    const baselines = getDebtBaselines();
-    delete baselines[id];
-    saveDebtBaselines(baselines);
+    // remove baseline history too
+const hist = getDebtBaselineHistory();
+delete hist[id];
+saveDebtBaselineHistory(hist);
 
     // unlink bills that pointed to it (UI now; persists on save())
     billsT.querySelectorAll('tr').forEach(tr=>{
@@ -1088,30 +1122,13 @@ function allMonthKeys(){
   return keys.sort();
 }
 
-function collectAllPaidLinkedPayments(){
-  // returns array of {debtId, amount, y, m, dateISO, billId}
-  const out = [];
-  const keys = allMonthKeys();
-  const meta = getDebtBaselineMeta();
-
-  keys.forEach(k=>{
-    // k is like "stable-2026-0"
-    const parts = k.split("-");
-    const y = Number(parts[1]);
-    const m = Number(parts[2]);
-
-    const d = JSON.parse(localStorage.getItem(k) || "{}");
-    const bills = d.bills || [];
-
-    bills.forEach(b=>{
-      if(!b || !b.paid || !b.linkedDebtId) return;
-
-      // ✅ apply cutoff per-debt
-      const cut = meta[b.linkedDebtId];
-      if(cut){
-        if(y < cut.cutY) return;
-        if(y === cut.cutY && m < cut.cutM) return;
-      }
+const meta = getDebtBaselineMeta();
+// ...
+const cut = meta[b.linkedDebtId];
+if(cut){
+  if(y < cut.cutY) return;
+  if(y === cut.cutY && m < cut.cutM) return;
+}
 
       const amt = Number(b.amount) || 0;
       if(amt <= 0) return;
@@ -1133,22 +1150,8 @@ function collectAllPaidLinkedPayments(){
 }
 
 // Store baseline starting balances to make recompute deterministic
-function getDebtBaselines(){
-  return JSON.parse(localStorage.getItem("debt-baselines") || "{}");
-}
-function saveDebtBaselines(b){
-  localStorage.setItem("debt-baselines", JSON.stringify(b));
-}
 
-function ensureBaselines(){
-  const baselines = getDebtBaselines();
-  const debts = getDebtsMaster();
-  let changed = false;
-  debts.forEach(d=>{
-    if(baselines[d.id] == null){
-      baselines[d.id] = Number(d.balance) || 0;
-      changed = true;
-    }
+
   });
   // Remove baselines for deleted debts
   Object.keys(baselines).forEach(id=>{
@@ -1162,11 +1165,13 @@ function ensureBaselines(){
 }
 
 function computeDebtsUpToMonth(limitY, limitM, inclusive){
+  // Start from each debt’s latest baseline at/before (limitY, limitM).
+  // If none exists yet, fall back to master balance.
   const debts = getDebtsMaster().map(d=>{
-  const b = getBaselineForMonth(d.id, limitY, limitM);
-  const startBal = (b ? b.balance : (Number(d.balance) || 0));
-  return { ...d, balance: round2(startBal) };
-});
+    const b = getBaselineForMonth(d.id, limitY, limitM);
+    const startBal = (b ? b.balance : (Number(d.balance) || 0));
+    return { ...d, balance: round2(startBal) };
+  });
 
   const payments = collectAllPaidLinkedPayments();
 
