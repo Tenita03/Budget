@@ -644,46 +644,7 @@ function key(){
   return `stable-${yearSel.value}-${monthSel.value}`;
 }
 
-function getDebtBaselineHistory(){
-  return JSON.parse(localStorage.getItem("debt-baseline-history") || "{}");
-}
-function saveDebtBaselineHistory(h){
-  localStorage.setItem("debt-baseline-history", JSON.stringify(h));
-}
 
-function ymLessOrEq(y1,m1,y2,m2){
-  return (y1 < y2) || (y1 === y2 && m1 <= m2);
-}
-
-function getBaselineForMonth(debtId, y, m){
-  const hist = getDebtBaselineHistory();
-  const arr = (hist[debtId] || []).slice().sort((a,b)=> (a.y-b.y) || (a.m-b.m));
-
-  // pick latest baseline <= (y,m)
-  let chosen = null;
-  for(const b of arr){
-    if(ymLessOrEq(b.y, b.m, y, m)) chosen = b;
-    else break;
-  }
-  return chosen; // {y,m,balance} or null
-}
-
-function upsertBaselineForCurrentMonth(debtId, balance){
-  const y = Number(yearSel.value);
-  const m = Number(monthSel.value);
-
-  const hist = getDebtBaselineHistory();
-  const arr = hist[debtId] || [];
-
-  const idx = arr.findIndex(b => b.y === y && b.m === m);
-  const entry = { y, m, balance: round2(balance) };
-
-  if(idx >= 0) arr[idx] = entry;
-  else arr.push(entry);
-
-  hist[debtId] = arr;
-  saveDebtBaselineHistory(hist);
-}
 
 function setDebtBaseline(debtId, newBalance){
   // Save this month's statement balance (month-specific baseline)
@@ -698,13 +659,6 @@ function setDebtBaseline(debtId, newBalance){
   saveDebtsMaster(debts);
 }
 
-// month increment helper
-function nextMonth(y, m){
-  m = Number(m);
-  y = Number(y);
-  if(m >= 11) return { y: y + 1, m: 0 };
-  return { y, m: m + 1 };
-}
 
 function toggleSection(header){
   const card = header.closest(".card");
@@ -813,7 +767,7 @@ if(removeBtn){
 
 function populateDebtSelect(select, selectedId = ""){
   if(!select) return;
-  const debts = (computedDebtsThisMonth.length ? computedDebtsThisMonth : getDebtsMaster());
+  const debts = getDebtsMaster();
   select.innerHTML = `<option value="">— None —</option>`;
   debts.forEach(d => {
     const opt = document.createElement("option");
@@ -832,7 +786,7 @@ function refreshAllBillDebtDropdowns(){
 }
 
 function refreshAllDebtSelects(){
-  const debts = (computedDebtsThisMonth.length ? computedDebtsThisMonth : getDebtsMaster());
+  const debts = getDebtsMaster();
 
   billsT.querySelectorAll('td[data-label="Linked Debt"] select').forEach(sel=>{
     const current = sel.value || "";
@@ -1113,6 +1067,7 @@ function sumBills(){
    - Debt balances are updated globally (debts-master) based on paid linked bills.
    - We avoid double-application by recomputing from a stored "baseline" per debt + all paid linked payments history.
 */
+
 function allMonthKeys(){
   const keys = [];
   for(let i=0;i<localStorage.length;i++){
@@ -1122,13 +1077,6 @@ function allMonthKeys(){
   return keys.sort();
 }
 
-const meta = getDebtBaselineMeta();
-// ...
-const cut = meta[b.linkedDebtId];
-if(cut){
-  if(y < cut.cutY) return;
-  if(y === cut.cutY && m < cut.cutM) return;
-}
 
       const amt = Number(b.amount) || 0;
       if(amt <= 0) return;
@@ -1149,6 +1097,40 @@ if(cut){
   return out;
 }
 
+function collectAllPaidLinkedPayments(){
+  // returns array of {debtId, amount, y, m, dateISO, billId}
+  const out = [];
+  const keys = allMonthKeys();
+
+  keys.forEach(k=>{
+    const parts = k.split("-");
+    const y = Number(parts[1]);
+    const m = Number(parts[2]);
+
+    const d = JSON.parse(localStorage.getItem(k) || "{}");
+    const bills = d.bills || [];
+
+    bills.forEach(b=>{
+      if(!b || !b.paid || !b.linkedDebtId) return;
+
+      const amt = Number(b.amount) || 0;
+      if(amt <= 0) return;
+
+      const date = b.paidDate || b.dueDate || "";
+      out.push({
+        debtId: b.linkedDebtId,
+        amount: amt,
+        y, m,
+        dateISO: date || "9999-12-31",
+        billId: b.id || uid("bill")
+      });
+    });
+  });
+
+  out.sort((a,b)=> (a.y - b.y) || (a.m - b.m) || String(a.dateISO).localeCompare(String(b.dateISO)));
+  return out;
+}
+
 // Store baseline starting balances to make recompute deterministic
 
 
@@ -1160,7 +1142,7 @@ if(cut){
       changed = true;
     }
   });
-  if(changed) saveDebtBaselines(baselines);
+  if(changed) (baselines);
   return baselines;
 }
 
@@ -1582,16 +1564,14 @@ $("addDebt").addEventListener("click", () => {
   setDebug("Add Debt clicked ✅");
   if(locked) return;
 
-  // Add to master first
   const debts = getDebtsMaster();
   const d = { id: uid("debt"), name:"", balance:0, apr:0, payment:0, extra:0 };
   debts.push(d);
   saveDebtsMaster(debts);
 
-  // ensure baseline exists
-  ensureBaselines();
+  // seed a baseline for this month
+  upsertBaselineForCurrentMonth(d.id, 0);
 
-  // Render card
   createDebtCard(d);
   refreshAllDebtSelects();
   update();
